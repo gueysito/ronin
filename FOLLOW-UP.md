@@ -61,6 +61,16 @@ These are real features but not worth building until someone is actually using t
 
 ---
 
+## Resolved
+
+### Supabase DB Connection (2026-03-24)
+- **Issue**: Pooler connection URL used `aws-0-us-east-1.pooler.supabase.com` — returned "Tenant or user not found." Direct host (`db.aclfzsrggbaenstuxpqy.supabase.co`) has no IPv4 A record, only IPv6, and local network doesn't support IPv6.
+- **Root cause**: The correct pooler host for this project is `aws-1-us-east-1.pooler.supabase.com` (not `aws-0`). Discovered via `supabase db push --dry-run --debug` which revealed the CLI's actual connection target.
+- **Fix**: Updated `DATABASE_URL` in `.env` to use `aws-1-us-east-1.pooler.supabase.com`.
+- **Status**: Schema pushed (`db:push`), seed complete (50 techniques + 32 videos). DB fully operational.
+
+---
+
 ## Not Built Yet
 
 These are required for a complete product but haven't been implemented:
