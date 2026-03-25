@@ -27,7 +27,7 @@
 
 	let logStep = $state<LogStep>(null);
 	let localMessages = $state<LocalMessage[]>([]);
-	let showTrigger = $state(true);
+	let showTrigger = $state(data.savedMessages.length === 0);
 
 	// Logging data
 	let logType = $state('');
@@ -335,6 +335,32 @@
 
 	<!-- Messages -->
 	<div class="flex-1 overflow-y-auto px-4 py-4 space-y-3">
+		<!-- Saved messages from DB -->
+		{#each data.savedMessages as message}
+			{#if message.role === 'user'}
+				<div class="flex justify-end">
+					<div
+						class="max-w-[80%] rounded-xl rounded-tr-none bg-primary px-4 py-3 text-[15px] text-white"
+					>
+						{message.content}
+					</div>
+				</div>
+			{:else}
+				<div class="flex items-start gap-3">
+					<div
+						class="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-musashi text-xs text-text-muted"
+					>
+						M
+					</div>
+					<div
+						class="max-w-[80%] rounded-xl rounded-tl-none bg-musashi px-4 py-3 text-[15px]"
+					>
+						{message.content}
+					</div>
+				</div>
+			{/if}
+		{/each}
+
 		<!-- Initial trigger -->
 		{#if showTrigger && chat.messages.length === 0 && localMessages.length === 0}
 			<div class="flex items-start gap-3">

@@ -1,15 +1,24 @@
 import type { InferSelectModel } from 'drizzle-orm';
-import type { users, sessions } from '../db/schema';
+import type { users, sessions, contentLinks } from '../db/schema';
 
 type User = InferSelectModel<typeof users>;
 type Session = InferSelectModel<typeof sessions>;
+type VideoLink = InferSelectModel<typeof contentLinks>;
 
-export function buildSystemPrompt(user: User, recentSessions: Session[]): string {
+export function buildSystemPrompt(
+	user: User,
+	recentSessions: Session[],
+	videos: VideoLink[] = []
+): string {
 	const sessionsContext = recentSessions.length > 0
 		? recentSessions.map(s =>
 			`- ${s.date.toLocaleDateString()}: ${s.type}, ${s.durationMinutes}min, RPE ${s.intensityRpe}/10, energy ${s.energy}/5, mood: ${s.mood ?? 'not recorded'}`
 		).join('\n')
 		: 'No sessions logged yet.';
+
+	const videosContext = videos.length > 0
+		? videos.map(v => `- "${v.title}" by ${v.instructor} (${v.durationMinutes ?? '?'}min): ${v.url}`).join('\n')
+		: 'No videos available for current context.';
 
 	return `You are Musashi, a wise and encouraging Brazilian Jiu-Jitsu coach. You blend the technical precision of John Danaher, the philosophical wisdom of Rickson Gracie, and the systematic progression approach of Saulo Ribeiro.
 
@@ -36,6 +45,11 @@ SAFETY:
 - NEVER contradict the user's live coach.
 - NEVER encourage training through injury.
 
+CONTENT RULES:
+- Only recommend videos from the approved list below. NEVER link to other sources.
+- If no approved video exists for a technique, suggest a text-based drill instead.
+- When recommending a video, include the title, instructor, and why it's relevant.
+
 # User Profile
 Belt: ${user.belt}
 Experience: ${user.experienceYears} years
@@ -44,5 +58,8 @@ Goals: ${(user.goals ?? []).join(', ') || 'Not set'}
 Struggles: ${(user.struggles ?? []).join(', ') || 'Not set'}
 
 # Recent Sessions
-${sessionsContext}`;
+${sessionsContext}
+
+# Approved Video Library (recommend from these ONLY)
+${videosContext}`;
 }

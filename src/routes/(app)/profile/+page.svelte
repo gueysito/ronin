@@ -1,5 +1,17 @@
 <script lang="ts">
 	let { data } = $props();
+	let upgrading = $state(false);
+
+	async function handleUpgrade() {
+		upgrading = true;
+		try {
+			const res = await fetch('/api/stripe/checkout', { method: 'POST' });
+			const { url } = await res.json();
+			if (url) window.location.href = url;
+		} catch {
+			upgrading = false;
+		}
+	}
 
 	const beltColors: Record<string, string> = {
 		white: 'bg-slate-200 text-slate-900',
@@ -119,12 +131,17 @@
 				></div>
 			</div>
 		</div>
-		<button
-			disabled
-			class="mt-3 inline-flex items-center rounded-lg bg-surface px-3 py-1.5 text-sm font-medium text-text-muted ring-1 ring-slate-700 cursor-not-allowed opacity-60"
-		>
-			Manage subscription
-		</button>
+		{#if data.profile.subscriptionTier === 'free'}
+			<button
+				onclick={handleUpgrade}
+				disabled={upgrading}
+				class="mt-3 inline-flex items-center rounded-lg bg-primary px-4 py-2 text-sm font-medium text-white hover:bg-primary/90 disabled:opacity-50"
+			>
+				{upgrading ? 'Redirecting...' : 'Upgrade to Pro — $9.99/mo'}
+			</button>
+		{:else}
+			<p class="mt-3 text-xs text-text-muted">Manage your subscription in Stripe's customer portal.</p>
+		{/if}
 	</div>
 
 	<!-- Settings -->

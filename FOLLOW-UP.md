@@ -58,3 +58,35 @@ These are real features but not worth building until someone is actually using t
 - Error tracking, session replays, analytics
 - Not needed until you have enough traffic to generate actionable data
 - Add Sentry first (catch errors), PostHog second (understand behavior)
+
+---
+
+## Not Built Yet
+
+These are required for a complete product but haven't been implemented:
+
+### 7. Data Export (JSON)
+- Profile page has a placeholder "Export my data" button — no endpoint behind it
+- Build a `GET /api/export` that queries all user data (profile, sessions, events) and returns a JSON download
+- Required for GDPR/CCPA compliance
+
+### 8. Account Deletion
+- Profile page has a placeholder "Delete my account" button — no endpoint behind it
+- Build a `DELETE /api/account` or form action that:
+  - Deletes all user data (sessions, events, conversations, messages, message counts)
+  - Deletes the Supabase Auth user
+  - Deletes the `users` row (cascade should handle related tables)
+  - Signs out and redirects to landing page
+- Add a confirmation dialog before deletion
+- Required for GDPR/CCPA compliance
+
+### 9. Privacy Policy & Terms of Service Pages
+- Landing page footer links to these but the pages don't exist
+- Create `/privacy` and `/terms` routes with the actual legal text
+- Can start with a standard SaaS template, customize for BJJ/training data sensitivity
+
+### 10. Training Reminder Notifications
+- No push notifications or email reminders implemented
+- Phase 1.5 feature per roadmap, but worth noting here
+- Options: Vercel Cron + email (Resend/Postmark), or Web Push API
+- Trigger: user hasn't logged in N days, send a nudge

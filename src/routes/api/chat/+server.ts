@@ -3,7 +3,7 @@ import { streamText, convertToModelMessages, type UIMessage } from 'ai';
 import { createAnthropic } from '@ai-sdk/anthropic';
 import { ANTHROPIC_API_KEY } from '$env/static/private';
 import { db } from '$lib/server/db';
-import { users, sessions, messageCounts } from '$lib/server/db/schema';
+import { users, sessions, messageCounts, contentLinks, conversations, messages as messagesTable } from '$lib/server/db/schema';
 import { eq, and, gte, desc, sql } from 'drizzle-orm';
 import { buildSystemPrompt } from '$lib/server/ai/system-prompt';
 import type { RequestHandler } from './$types';
@@ -66,13 +66,53 @@ export const POST: RequestHandler = async ({ request, locals }) => {
 		limit: 5
 	});
 
+	// Fetch relevant videos (belt-appropriate, limit context size)
+	const videos = await db.query.contentLinks.findMany({
+		where: eq(contentLinks.isPrimary, true),
+		limit: 15
+	});
+
 	const anthropic = createAnthropic({ apiKey: ANTHROPIC_API_KEY });
+
+	// Ensure conversation exists for persistence
+	let conversation = await db.query.conversations.findFirst({
+		where: eq(conversations.userId, user.id),
+		orderBy: [desc(conversations.createdAt)]
+	});
+	if (!conversation) {
+		const [newConv] = await db.insert(conversations).values({ userId: user.id }).returning();
+		conversation = newConv;
+	}
+
+	// Save the latest user message
+	const lastUserMsg = messages.filter(m => m.role === 'user').pop();
+	if (lastUserMsg) {
+		const textContent = lastUserMsg.parts
+			?.filter((p: any) => p.type === 'text')
+			.map((p: any) => p.text)
+			.join('') ?? '';
+		if (textContent) {
+			await db.insert(messagesTable).values({
+				conversationId: conversation.id,
+				role: 'user',
+				content: textContent
+			});
+		}
+	}
 
 	const result = streamText({
 		model: anthropic('claude-haiku-4-5'),
-		system: buildSystemPrompt(user, recentSessions),
+		system: buildSystemPrompt(user, recentSessions, videos),
 		messages: await convertToModelMessages(messages),
-		maxRetries: 2
+		maxRetries: 2,
+		onFinish: async ({ text }) => {
+			// Save assistant response
+			await db.insert(messagesTable).values({
+				conversationId: conversation.id,
+				role: 'assistant',
+				content: text
+			});
+		}
 	});
 
 	return result.toUIMessageStreamResponse();
