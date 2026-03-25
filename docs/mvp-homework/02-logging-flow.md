@@ -1,350 +1,197 @@
-# Daily Logging Flow Template
+# Logging Flow -- COMPLETED
 
-**Purpose**: Define the step-by-step UX for logging a training session after class.
-
-**Goal**: Make it so fast and intuitive that users log within 60 seconds.
+**Status**: COMPLETE
+**Completed by**: Research-driven design (March 2026)
+**Target**: Complete session log in under 60 seconds
 
 ---
 
-## Instructions
+## Core Principle
 
-Map out the EXACT conversation flow from "Did you train today?" to AI feedback.
-
-**Key Principles**:
-- Mobile-first (user is tired, potentially in the parking lot)
-- Quick-select buttons whenever possible (minimize typing)
-- Progressively reveal complexity (don't overwhelm with all questions at once)
+Logging happens IN the chat, not in a separate form. Musashi guides the conversation with quick-select buttons. The user should be able to log a full session by tapping 5-7 buttons and typing 0 words. Free text is always optional.
 
 ---
 
 ## Logging Flow
 
-### Trigger: User Opens App After Training
+### Trigger
 
-**Option A**: User proactively opens app  
-**Option B** (Phase 1.5): Push notification "Did you train today?" → user taps → opens to chat
+Musashi initiates when user opens the app (if they haven't logged today):
+"Did you train today?"
 
----
+**Options**:
+[Yes, I rolled] [Yes, drilling only] [Open mat] [Competition] [Private lesson] [Rest day]
 
-### Step 1: Initiate Logging
-
-**Musashi**: 
-```
-[Write the exact opening question]
-Example: "Hey! Did you train today?"
-```
-
-**Options**: 
-```
-[List exact button labels]
-Example:
-[Yes, I rolled 🥋] [Yes, just drilling] [No, rest day]
-
-If "No, rest day":
-  Musashi: "Smart! Recovery is part of training. See you next session."
-  [END FLOW]
-```
+- **"Rest day"** -> "Smart. Recovery is training. See you next session." (End flow, no log created.)
+- Any training option -> Continue to Step 1.
 
 ---
 
-### Step 2: Session Type & Duration
+### Step 1: Duration
 
-**Musashi** (if user said yes to training): 
-```
-[Write the exact question]
-Example: "Nice! How long did you train?"
-```
+**Musashi**:
+"How long was your session?"
 
-**Options**: 
-```
-[List quick-select durations]
-Example:
-[30 min] [60 min] [90 min] [2+ hours] [Custom: text input]
-```
-
-**Optional Follow-Up**: 
-```
-"What type of session was it?"
-[Rolling/Sparring] [Technique Drilling] [Open Mat] [Competition] [Private Lesson]
-```
-
-**Your Decision**: Do we ask session type, or just duration? Both?
+**Options** (single-select):
+[30 min] [45 min] [60 min] [90 min] [2 hours] [2.5+ hours]
 
 ---
 
-### Step 3: Energy/Intensity Check
+### Step 2: Intensity (RPE)
 
-**Musashi**: 
-```
-[Write the exact question]
-Example: "How was your energy today?"
-```
+**Musashi**:
+"How hard did you go?"
 
-**Options**: 
-```
-[List emoji-based scale]
-Example:
-[🔥 Felt amazing] [😊 Pretty good] [😐 Average] [😓 Tired/gassed out]
-```
-
-**Alternative**: Ask intensity (RPE scale 1-10) instead of or in addition to energy?
-```
-"How hard did you push yourself today?" (Rate 1-10)
-[1] [2] [3] ... [10]
-OR
-[Light] [Moderate] [Hard] [Max effort]
-```
-
-**Your Choice**: Energy, Intensity, or both?
+**Options** (emoji scale, single-select):
+[1-2 Light drilling] [3-4 Technical] [5-6 Moderate] [7-8 Hard rounds] [9-10 Competition pace]
 
 ---
 
-### Step 4: Technique Logging (Submissions)
+### Step 3: What You Hit (Submissions / Sweeps / Passes)
 
-**Musashi**: 
-```
-[Write the exact question]
-Example: "Did you hit any submissions or get caught with any?"
-```
+**Musashi**:
+"Any submissions, sweeps, or passes you hit today?"
 
-**Options**: 
-```
-[Hit a submission ✅] [Got submitted ❌] [None today] [Skip]
-```
+**Options** (multi-select grid of common techniques, pulled from taxonomy):
 
-#### If "Hit a submission ✅":
-
-**Musashi**: 
-```
-"Nice! What did you get?"
-```
-
-**UI**: Show grid of common techniques (quick-select)
-```
-[List 12-15 most common techniques as buttons in a grid]
-Example:
+**Quick-select grid** (shows top 12 most relevant to user's belt and recent activity):
 [Armbar] [Triangle] [RNC] [Kimura] [Guillotine] [Americana]
-[D'Arce] [Anaconda] [Omoplata] [Bow & Arrow] [Ezekiel] [Other...]
+[Scissor Sweep] [Hip Bump] [Butterfly Sweep] [Knee Cut Pass] [Torreando] [Other]
 
-If "Other" selected:
-  → Text input: "What submission?"
-  → Autocomplete from full technique list
-```
+- User taps techniques they hit. Each tap adds to list.
+- **[Other]** -> Opens autocomplete search field (searches full technique list + synonyms)
+- **[None today]** button at bottom if no successful techniques
 
-**Follow-Up**: 
-```
-Musashi: "From what position?"
-[Closed Guard] [Open Guard] [Half Guard] [Mount] [Side Control] [Back] [Other...]
-```
+For each technique selected, Musashi asks:
+"How many times?" -> [1] [2] [3] [4+]
 
-**Follow-Up**: 
-```
-Musashi: "Want to add another submission, or move on?"
-[+ Add another] [That's it, analyze my session]
-```
-
-#### If "Got submitted ❌":
-
-**Musashi**: 
-```
-"No worries, we all get tapped. What caught you?"
-```
-
-**UI**: Same technique grid as above
-
-**Follow-Up**: Same position question
+**If user hits a technique for the first time ever** -> Flag for special celebration response in AI feedback.
 
 ---
 
-### Step 5: Position Struggles (Optional But Useful)
+### Step 4: What Caught You (Submissions Received)
 
-**Musashi**: 
-```
-[Write the exact question]
-Example: "Were there any positions that gave you trouble today?"
-```
+**Musashi**:
+"Anything catch you today? No judgment -- this is how we find the holes."
 
-**Options**: 
-```
-[Let them select multiple from a list]
-Example:
-[ ] Bottom side control (couldn't escape)
-[ ] Bottom mount (couldn't escape)
-[ ] Guard (kept getting passed)
-[ ] Passing guard (couldn't get through)
-[ ] Back defense (kept getting taken)
-[ ] None, felt solid everywhere
-```
+**Options** (same grid as Step 3, but framed as "received"):
+[Armbar] [Triangle] [RNC] [Kimura] [Guillotine] [Choke (other)]
+[Got swept] [Got passed] [Got taken down] [Nothing caught me] [Other]
 
-**Your Decision**: 
-- Include this in MVP, or Phase 2?
-- If included, make it optional (skippable)?
+- **[Nothing caught me]** -> "Clean day! Let's keep that going."
+- If same technique catches them 2+ sessions in a row, Musashi flags the pattern in feedback.
 
 ---
 
-### Step 6: Mood/Mental State
+### Step 5: Positions Worked
 
-**Musashi**: 
-```
-[Write the exact question]
-Example: "How did you feel mentally during training?"
-```
+**Musashi**:
+"Which positions did you spend the most time in?"
 
-**Options**: 
-```
-[List emotional states with emojis]
-Example:
-[😤 Confident/focused] [😊 Happy/flowing] [😑 Frustrated] [😰 Anxious/nervous] [😶 Just okay]
-```
+**Options** (multi-select, pick 1-4):
+[Closed Guard] [Open Guard] [Half Guard] [Mount (top)] [Mount (bottom)]
+[Side Control (top)] [Side Control (bottom)] [Back (attacking)] [Back (defending)]
+[Standing / Takedowns] [Turtle]
 
-**Your Decision**: 
-- Is this too intrusive for MVP? (Could defer to Phase 2)
-- If included, make it optional?
+This data feeds the position heatmap on the dashboard.
 
 ---
 
-### Step 7: Optional Notes
+### Step 6: Energy & Mood
 
-**Musashi**: 
-```
-"Anything else you want to remember about today's session?"
-```
+**Musashi**:
+"How's the body and mind?"
 
-**Input Type**: Free text (optional, can skip)
+**Energy** (single-select):
+[Great] [Good] [Average] [Low] [Gassed]
 
-**Placeholder**: "e.g., 'Rolled with a new purple belt, learned a cool sweep'"
-
----
-
-### Step 8: AI Feedback Generation
-
-**Loading State**: 
-```
-[Show loading spinner or typing indicator]
-"Musashi is thinking..."
-```
-
-**Musashi Response** (Generated by AI):
-```
-[Example response format—you'll write the system prompt separately]
-
-Example:
-"Great work today! 🥋 I see you're hitting triangles consistently—that's becoming 
-a real weapon for you. Your guard is solid.
-
-For next session, try focusing on your half guard retention. I noticed you've 
-struggled there the last 3 sessions. Here's a great breakdown by Lachlan Giles:
-[Video Link]
-
-How's your knee feeling? Make sure to ice and rest if it's still sore."
-```
-
-**Components of Response** (for system prompt reference):
-1. ✅ Encouragement (specific to what they did)
-2. ✅ Pattern recognition (reference past sessions)
-3. ✅ Next focus area (specific drill/position)
-4. ✅ Video recommendation (1-2 links max)
-5. ✅ Holistic check-in (if they mentioned injury/low energy)
+**Mood** (single-select):
+[Confident] [Focused] [Frustrated] [Anxious] [Flow state]
 
 ---
 
-### Step 9: End of Flow
+### Step 7: Notes (Optional)
 
-**Options After Feedback**: 
-```
-[View Dashboard] [Log Another Session] [Done]
-```
+**Musashi**:
+"Anything else you want to remember about today?"
 
-OR auto-show updated stats inline in chat?
-```
-Musashi: "Here's your week so far:"
-[Inline chart: Submissions this week]
-[Inline stat: "3/4 training days this week—keep it up!"]
-```
+**Input**: Free text field (optional, placeholder: "e.g., 'Worked on a new guard entry with Coach Mike'")
 
-**Your Preference**: Show stats in chat, or just offer button to dashboard?
+**Options**:
+[Submit log] [Skip notes & submit]
 
 ---
 
-## Flow Variations
+### Step 8: AI Feedback (Musashi Responds)
 
-### Scenario: User Only Drilled (No Sparring)
+After submission, Musashi generates a response following the system prompt structure:
 
-If they selected "Just drilling":
+1. **Acknowledgment** (specific to what they logged)
+2. **Insight** (pattern, improvement, or concern)
+3. **Forward action** (drill, focus, or video recommendation)
+
+Example (blue belt, logged 2 armbars from guard, got swept twice, average energy, frustrated mood):
+
+"Two armbars from guard -- your attack from bottom is developing. Getting swept twice though, that's been a theme the last 3 sessions. Your base might be the issue. Before your next class, watch this base and posture breakdown by Bernardo Faria: [video]. And don't let the frustration stick -- bad days are just data."
+
+---
+
+## Flow Summary
+
+| Step | Question | Input Type | Time |
+|------|----------|-----------|------|
+| Trigger | Did you train? | Single-select (6 options) | 2s |
+| 1 | Duration | Single-select (6 options) | 2s |
+| 2 | Intensity | Single-select (5 options) | 2s |
+| 3 | What you hit | Multi-select grid + count | 10-15s |
+| 4 | What caught you | Multi-select grid | 5-10s |
+| 5 | Positions worked | Multi-select (11 options) | 5s |
+| 6 | Energy & mood | Two single-selects | 4s |
+| 7 | Notes | Optional free text | 0-15s |
+| **Total** | | | **30-55 seconds** |
+
+---
+
+## Adaptive Behavior
+
+- **Quick-select grid order**: Techniques are sorted by frequency for this user. Their most-used techniques appear first. New users get the default order (most common by belt level from taxonomy data).
+- **Repeat patterns**: If a user logs the same struggle 3+ sessions in a row, Musashi proactively addresses it in the feedback without the user asking.
+- **Low-effort mode**: If user responds with just "yes" or minimal input, Musashi gently guides but never nags. One prompt per step, move on if skipped.
+- **Session type adaptation**: "Drilling only" sessions skip Step 3 (what you hit) and Step 4 (what caught you), and instead ask: "What technique(s) were you drilling?" with the same grid.
+
+---
+
+## Data Stored Per Log
+
+```json
+{
+  "session": {
+    "date": "auto (editable)",
+    "type": "rolling | drilling | open_mat | competition | private_lesson",
+    "duration_minutes": 60,
+    "intensity_rpe": 7,
+    "energy": 3,
+    "mood": "frustrated",
+    "notes": "optional free text"
+  },
+  "events": [
+    { "type": "success", "technique_id": "armbar", "count": 2 },
+    { "type": "success", "technique_id": "scissor_sweep", "count": 1 },
+    { "type": "against", "technique_id": "triangle_choke", "count": 1 }
+  ],
+  "positions_worked": ["closed_guard", "mount_top", "side_control_bottom"]
+}
 ```
-Musashi: "What techniques did you work on?"
-[List of techniques or free text input]
-
-Musashi: "How did it feel? Getting the hang of it?"
-[😊 Feeling confident] [😐 Still figuring it out] [😓 Super confusing]
-```
-
-**Your Decision**: How much detail for drilling-only sessions?
 
 ---
 
-### Scenario: User Competed
+## Completion Checklist
 
-If they selected "Competition" as session type:
-```
-Musashi: "How did it go?"
-[Won 🏆] [Lost] [Mixed results]
-
-Musashi: "Want to break down a specific match?"
-[Yes, let's analyze] [No, just log the result]
-```
-
-**Your Decision**: Include competition flow in MVP, or defer to Phase 2?
-
----
-
-## Timing & Friction Analysis
-
-Estimate how long each step takes:
-
-| Step | Est. Time | Interaction Type |
-|------|-----------|------------------|
-| Did you train? | 2 sec | 1 tap |
-| Duration | 3 sec | 1 tap |
-| Energy | 2 sec | 1 tap |
-| Submissions (1 technique) | 8 sec | 2 taps (technique + position) |
-| Add another submission | 8 sec | 2 taps |
-| Position struggles | 5 sec | 1-3 taps |
-| Mood | 2 sec | 1 tap |
-| Optional notes | 0-20 sec | Skippable |
-| **TOTAL** | **30-50 sec** | ✅ Under 60 sec goal |
-
-**Your Task**: Validate this timing feels right for YOUR use case
-
----
-
-## Edge Cases to Handle
-
-1. **User logs multiple sessions in one day** (e.g., morning drilling + evening rolling)
-   - How do we handle this? Separate logs or combined?
-
-2. **User forgets to log yesterday's session**
-   - Should Musashi prompt: "I noticed you didn't log yesterday. Want to add it now?"
-
-3. **User logs same submission 5 times in one session**
-   - UI should make this fast (e.g., "Add another armbar? [Yes]")
-
-4. **User wants to edit a past log**
-   - Include "Edit" button on past sessions in chat history?
-
-**Your Decisions on Edge Cases**: [Write here]
-
----
-
-## ✅ Completion Checklist
-
-- [ ] All Musashi questions filled in with exact wording
-- [ ] All button options specified
-- [ ] Decided which fields are required vs optional
-- [ ] Decided on session type variations (drilling, competition, etc.)
-- [ ] Estimated timing validated (<60 sec goal)
-- [ ] Edge cases considered
-
----
-
-**Once complete, move to [03-system-prompt.md](./03-system-prompt.md)**
+- [x] Step-by-step flow defined with exact Musashi prompts
+- [x] All quick-select options specified per step
+- [x] Multi-select vs single-select specified
+- [x] Session type variations handled (drilling, competition, etc.)
+- [x] Data schema for stored log defined
+- [x] AI feedback structure specified
+- [x] Adaptive behavior rules defined (grid ordering, repeat patterns)
+- [x] Total estimated time: 30-55 seconds

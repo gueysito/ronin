@@ -1,0 +1,933 @@
+{
+  "_meta": {
+    "description": "BJJ Technique Taxonomy - Research-based seed data for MatMentor",
+    "sources": [
+      "Saulo Ribeiro - Jiu-Jitsu University (2008)",
+      "John Danaher - Enter the System / New Wave / Go Further Faster series",
+      "IBJJF World Championships statistics (2019-2023)",
+      "ADCC competition data (2022-2023)",
+      "BJJ World, BJJ Heroes, BJJ Equipment competition analysis",
+      "Academy curricula: Jay Pages JJMMA, Synergy BJJ, BJJ Foundation"
+    ],
+    "created": "2026-03-24"
+  },
+
+  "domains": [
+    {
+      "id": "standing",
+      "name": "Standing / Takedowns",
+      "description": "Taking the fight to the ground. Danaher Step 1: Remove opponent's ability to use legs for power generation.",
+      "belt_emphasis": "All belts, intensifies at purple+",
+      "ribeiro_mapping": null,
+      "danaher_mapping": "Feet to Floor / Standing to Ground series"
+    },
+    {
+      "id": "guard",
+      "name": "Guard Play",
+      "description": "Bottom position with legs as primary weapons. Sweeps, submissions, and retention from guard. Danaher Step 2 obstacle: opponent must get past the legs.",
+      "belt_emphasis": "Purple belt primary focus (Ribeiro)",
+      "ribeiro_mapping": "Chapter 4: Purple Belt - The Guard",
+      "danaher_mapping": "New Wave: Open Guard, Half Guard, Closed Guard / GFF: Closed Guard, Half Guard, Open Guard, Guard Retention"
+    },
+    {
+      "id": "passing",
+      "name": "Guard Passing",
+      "description": "Getting past opponent's legs to achieve a dominant top position. Statistically, securing a guard pass gives 99.6% win probability.",
+      "belt_emphasis": "Brown belt primary focus (Ribeiro)",
+      "ribeiro_mapping": "Chapter 5: Brown Belt - Guard Passing",
+      "danaher_mapping": "New Wave: No-Gi Guard Passing / GFF: Passing the Guard, Half Guard Passing & Dynamic Pins"
+    },
+    {
+      "id": "control_escapes",
+      "name": "Positional Control & Escapes",
+      "description": "Maintaining dominant pins (side control, mount, back, knee-on-belly) and escaping from inferior positions. Danaher Steps 3-4: hierarchy of pins graded by striking/submission ability.",
+      "belt_emphasis": "White belt = survival, Blue belt = escapes (Ribeiro)",
+      "ribeiro_mapping": "Chapter 2: White Belt - Survival / Chapter 3: Blue Belt - Escapes",
+      "danaher_mapping": "New Wave: Positional Escapes, Submission Escapes / GFF: Pin Escapes & Turtle Escapes"
+    },
+    {
+      "id": "submissions",
+      "name": "Submissions",
+      "description": "Finishing techniques: chokes, joint locks, and leg locks. Competition data: 53% chokes, ~24% arm attacks, ~23% leg attacks.",
+      "belt_emphasis": "Black belt primary focus (Ribeiro)",
+      "ribeiro_mapping": "Chapter 6: Black Belt - Submissions",
+      "danaher_mapping": "Enter the System series (Leg Locks, Back Attacks, Front Headlocks, Triangles, Kimuras, Armbars)"
+    }
+  ],
+
+  "positions": [
+    {
+      "id": "standing",
+      "name": "Standing",
+      "domain": "standing",
+      "description": "Both fighters on feet. Entry point for all grappling exchanges.",
+      "hierarchy_rank": 0,
+      "danaher_hierarchy": "Starting position"
+    },
+    {
+      "id": "closed_guard",
+      "name": "Closed Guard",
+      "domain": "guard",
+      "description": "Bottom player's legs wrapped around opponent's waist, ankles locked. Classic BJJ position.",
+      "hierarchy_rank": 5,
+      "ribeiro_coverage": "Purple Belt chapter - vs kneeling and standing opponents",
+      "danaher_coverage": "New Wave: Closed Guard / GFF: Closed Guard"
+    },
+    {
+      "id": "open_guard",
+      "name": "Open Guard",
+      "domain": "guard",
+      "description": "Bottom player's legs not locked around opponent. Includes collar-sleeve, seated guard. Most common guard for sweeping in IBJJF.",
+      "hierarchy_rank": 5
+    },
+    {
+      "id": "half_guard",
+      "name": "Half Guard",
+      "domain": "guard",
+      "description": "Bottom player controls one of opponent's legs between theirs. Includes standard, lockdown, Z-guard, deep half, butterfly half.",
+      "hierarchy_rank": 4,
+      "ribeiro_coverage": "Purple Belt chapter",
+      "danaher_coverage": "New Wave: Half Guard / GFF: Half Guard"
+    },
+    {
+      "id": "butterfly_guard",
+      "name": "Butterfly Guard",
+      "domain": "guard",
+      "description": "Seated guard with both feet as hooks inside opponent's thighs. Strong sweeping position.",
+      "hierarchy_rank": 5,
+      "ribeiro_coverage": "Purple Belt chapter"
+    },
+    {
+      "id": "de_la_riva",
+      "name": "De La Riva Guard",
+      "domain": "guard",
+      "description": "Open guard with one leg hooking behind opponent's lead leg. One of the best guards for sweeping per IBJJF data. Includes reverse DLR.",
+      "hierarchy_rank": 5,
+      "ribeiro_coverage": "Purple Belt chapter - DLR and Reverse DLR"
+    },
+    {
+      "id": "spider_guard",
+      "name": "Spider Guard",
+      "domain": "guard",
+      "description": "Gi-based open guard using sleeve grips with feet on opponent's biceps. Includes lasso variation.",
+      "hierarchy_rank": 5,
+      "ribeiro_coverage": "Purple Belt chapter"
+    },
+    {
+      "id": "x_guard",
+      "name": "X-Guard / Single Leg X",
+      "domain": "guard",
+      "description": "Guard with legs forming an X shape under opponent. Includes full X-guard and single-leg X (Ashi Garami entry). Strong sweeping and leg lock entry position.",
+      "hierarchy_rank": 5,
+      "ribeiro_coverage": "Brown Belt chapter (passing), Purple Belt chapter (playing)"
+    },
+    {
+      "id": "fifty_fifty",
+      "name": "50/50 Guard",
+      "domain": "guard",
+      "description": "Symmetrical leg entanglement. One of the best guards for sweeping per IBJJF data. Also a leg lock entry.",
+      "hierarchy_rank": 5
+    },
+    {
+      "id": "turtle",
+      "name": "Turtle",
+      "domain": "control_escapes",
+      "description": "Defensive position on hands and knees, protecting neck. Common transition position.",
+      "hierarchy_rank": 3,
+      "danaher_coverage": "GFF: Strangles & Turtle Breakdowns / Pin Escapes & Turtle Escapes"
+    },
+    {
+      "id": "side_control",
+      "name": "Side Control",
+      "domain": "control_escapes",
+      "description": "Dominant pin across opponent's chest. Includes traditional, kesa gatame (scarf hold), reverse kesa, and north-south variations.",
+      "hierarchy_rank": 7,
+      "ribeiro_coverage": "White Belt (survival), Blue Belt (escapes), Black Belt (submissions from)",
+      "danaher_coverage": "New Wave: Side Attacks"
+    },
+    {
+      "id": "north_south",
+      "name": "North-South",
+      "domain": "control_escapes",
+      "description": "Head-to-head pin position. Strong control, limited but effective submissions.",
+      "hierarchy_rank": 7
+    },
+    {
+      "id": "knee_on_belly",
+      "name": "Knee on Belly",
+      "domain": "control_escapes",
+      "description": "Dominant position with knee on opponent's torso. Mobile, high-pressure pin. Transition point to mount or back.",
+      "hierarchy_rank": 8,
+      "ribeiro_coverage": "White Belt (survival), Blue Belt (escape)"
+    },
+    {
+      "id": "mount",
+      "name": "Mount",
+      "domain": "control_escapes",
+      "description": "Sitting on opponent's torso. Includes low mount, high mount, S-mount, and technical mount. Second-best position in Danaher hierarchy.",
+      "hierarchy_rank": 9,
+      "ribeiro_coverage": "White Belt (survival), Blue Belt (escapes), Black Belt (submissions from)",
+      "danaher_coverage": "New Wave: Mounted Pin Attacks"
+    },
+    {
+      "id": "back_control",
+      "name": "Back Control",
+      "domain": "control_escapes",
+      "description": "Controlling opponent from behind with hooks and/or body triangle. Best position in Danaher hierarchy. Produces most submissions in competition (45% of IBJJF 2023 subs were from back).",
+      "hierarchy_rank": 10,
+      "ribeiro_coverage": "White Belt (survival), Blue Belt (escapes), Black Belt (submissions from)",
+      "danaher_coverage": "Enter the System: Back Attacks (Straight Jacket System)"
+    },
+    {
+      "id": "front_headlock",
+      "name": "Front Headlock / Turtle Top",
+      "domain": "control_escapes",
+      "description": "Controlling opponent's head from the front while they are turtled or on hands and knees. Gateway to guillotines, darces, anacondas.",
+      "hierarchy_rank": 6,
+      "danaher_coverage": "Enter the System: Front Headlocks"
+    },
+    {
+      "id": "guard_top",
+      "name": "Inside Guard (Top)",
+      "domain": "passing",
+      "description": "Top position inside opponent's guard. The passer's perspective. Starting point for all guard passing sequences.",
+      "hierarchy_rank": 3
+    },
+    {
+      "id": "leg_entanglements",
+      "name": "Leg Entanglements (Ashi Garami)",
+      "domain": "submissions",
+      "description": "Leg-on-leg control positions for attacking lower body submissions. Danaher system: outside ashi (least control) to inside sankaku (max control). Includes SLX, 50/50, honey hole/inside sankaku, outside ashi, cross ashi.",
+      "hierarchy_rank": 5,
+      "danaher_coverage": "Enter the System: Leg Locks"
+    },
+    {
+      "id": "crucifix",
+      "name": "Crucifix",
+      "domain": "control_escapes",
+      "description": "Controlling opponent with arms trapped, one by legs, one by arms. High-control submission position.",
+      "hierarchy_rank": 8
+    }
+  ],
+
+  "techniques": [
+    {
+      "id": "double_leg_takedown",
+      "name": "Double Leg Takedown",
+      "domain": "standing",
+      "position": "standing",
+      "type": "takedown",
+      "belt_level": "white",
+      "competition_relevance": "high",
+      "source": "Universal BJJ/wrestling curriculum"
+    },
+    {
+      "id": "single_leg_takedown",
+      "name": "Single Leg Takedown",
+      "domain": "standing",
+      "position": "standing",
+      "type": "takedown",
+      "belt_level": "white",
+      "competition_relevance": "high",
+      "source": "Universal BJJ/wrestling curriculum"
+    },
+    {
+      "id": "body_lock_takedown",
+      "name": "Body Lock Takedown",
+      "domain": "standing",
+      "position": "standing",
+      "type": "takedown",
+      "belt_level": "blue",
+      "competition_relevance": "high",
+      "source": "BJJ World blue belt curriculum"
+    },
+    {
+      "id": "osoto_gari",
+      "name": "O Soto Gari (Outside Reap)",
+      "domain": "standing",
+      "position": "standing",
+      "type": "takedown",
+      "belt_level": "blue",
+      "competition_relevance": "medium",
+      "source": "Judo/BJJ crossover, BJJ World blue belt curriculum"
+    },
+    {
+      "id": "ouchi_gari",
+      "name": "O Uchi Gari (Inside Reap)",
+      "domain": "standing",
+      "position": "standing",
+      "type": "takedown",
+      "belt_level": "blue",
+      "competition_relevance": "medium",
+      "source": "Judo/BJJ crossover"
+    },
+    {
+      "id": "ogoshi",
+      "name": "O Goshi (Hip Throw)",
+      "domain": "standing",
+      "position": "standing",
+      "type": "takedown",
+      "belt_level": "blue",
+      "competition_relevance": "medium",
+      "source": "Judo/BJJ crossover"
+    },
+    {
+      "id": "guard_pull",
+      "name": "Guard Pull",
+      "domain": "standing",
+      "position": "standing",
+      "type": "takedown",
+      "belt_level": "white",
+      "competition_relevance": "very_high",
+      "source": "IBJJF standard technique"
+    },
+    {
+      "id": "snap_down",
+      "name": "Snap Down to Front Headlock",
+      "domain": "standing",
+      "position": "standing",
+      "type": "takedown",
+      "belt_level": "purple",
+      "competition_relevance": "high",
+      "source": "Danaher front headlock system, BJJ World purple belt curriculum"
+    },
+    {
+      "id": "collar_drag",
+      "name": "Collar Drag",
+      "domain": "standing",
+      "position": "standing",
+      "type": "takedown",
+      "belt_level": "blue",
+      "competition_relevance": "medium",
+      "source": "Jay Pages curriculum"
+    },
+
+    {
+      "id": "scissor_sweep",
+      "name": "Scissor Sweep",
+      "domain": "guard",
+      "position": "closed_guard",
+      "type": "sweep",
+      "belt_level": "white",
+      "competition_relevance": "high",
+      "source": "Universal BJJ curriculum, BJJ World blue belt"
+    },
+    {
+      "id": "hip_bump_sweep",
+      "name": "Hip Bump Sweep (Sit-Up Sweep)",
+      "domain": "guard",
+      "position": "closed_guard",
+      "type": "sweep",
+      "belt_level": "white",
+      "competition_relevance": "high",
+      "source": "Universal BJJ curriculum"
+    },
+    {
+      "id": "pendulum_sweep",
+      "name": "Pendulum Sweep (Flower Sweep)",
+      "domain": "guard",
+      "position": "closed_guard",
+      "type": "sweep",
+      "belt_level": "blue",
+      "competition_relevance": "high",
+      "source": "BJJ World blue belt curriculum"
+    },
+    {
+      "id": "lumberjack_sweep",
+      "name": "Lumberjack Sweep",
+      "domain": "guard",
+      "position": "closed_guard",
+      "type": "sweep",
+      "belt_level": "blue",
+      "competition_relevance": "medium",
+      "source": "Common closed guard technique vs standing opponent"
+    },
+    {
+      "id": "tripod_sweep",
+      "name": "Tripod Sweep",
+      "domain": "guard",
+      "position": "open_guard",
+      "type": "sweep",
+      "belt_level": "blue",
+      "competition_relevance": "high",
+      "source": "BJJ World blue belt curriculum, Jay Pages curriculum"
+    },
+    {
+      "id": "sickle_sweep",
+      "name": "Sickle Sweep",
+      "domain": "guard",
+      "position": "open_guard",
+      "type": "sweep",
+      "belt_level": "blue",
+      "competition_relevance": "medium",
+      "source": "BJJ World blue belt curriculum"
+    },
+    {
+      "id": "butterfly_sweep",
+      "name": "Butterfly Sweep (Hook Sweep)",
+      "domain": "guard",
+      "position": "butterfly_guard",
+      "type": "sweep",
+      "belt_level": "blue",
+      "competition_relevance": "high",
+      "source": "Ribeiro Purple Belt chapter, universal curriculum"
+    },
+    {
+      "id": "dlr_sweep",
+      "name": "De La Riva Sweep",
+      "domain": "guard",
+      "position": "de_la_riva",
+      "type": "sweep",
+      "belt_level": "purple",
+      "competition_relevance": "very_high",
+      "notes": "DLR is one of the best guards for sweeping per IBJJF data",
+      "source": "Ribeiro Purple Belt chapter, IBJJF competition data"
+    },
+    {
+      "id": "x_guard_sweep",
+      "name": "X-Guard Technical Stand-Up Sweep",
+      "domain": "guard",
+      "position": "x_guard",
+      "type": "sweep",
+      "belt_level": "purple",
+      "competition_relevance": "high",
+      "source": "BJJ World purple belt curriculum, Jay Pages curriculum"
+    },
+    {
+      "id": "half_guard_underhook_sweep",
+      "name": "Half Guard Underhook Sweep (Old School)",
+      "domain": "guard",
+      "position": "half_guard",
+      "type": "sweep",
+      "belt_level": "blue",
+      "competition_relevance": "high",
+      "source": "Jay Pages curriculum, universal half guard technique"
+    },
+    {
+      "id": "lasso_sweep",
+      "name": "Lasso Sweep",
+      "domain": "guard",
+      "position": "spider_guard",
+      "type": "sweep",
+      "belt_level": "purple",
+      "competition_relevance": "high",
+      "source": "Jay Pages curriculum, BJJ World purple belt"
+    },
+    {
+      "id": "spider_triangle_sweep",
+      "name": "Spider Guard Triangle / Sweep",
+      "domain": "guard",
+      "position": "spider_guard",
+      "type": "sweep",
+      "belt_level": "purple",
+      "competition_relevance": "medium",
+      "source": "Jay Pages curriculum"
+    },
+
+    {
+      "id": "knee_cut_pass",
+      "name": "Knee Cut Pass (Knee Slice)",
+      "domain": "passing",
+      "position": "guard_top",
+      "type": "guard_pass",
+      "belt_level": "blue",
+      "competition_relevance": "very_high",
+      "notes": "Most popular guard pass in IBJJF competition",
+      "source": "IBJJF data, Jay Pages curriculum, BJJ World purple belt"
+    },
+    {
+      "id": "torreando_pass",
+      "name": "Torreando Pass (Bullfighter Pass)",
+      "domain": "passing",
+      "position": "guard_top",
+      "type": "guard_pass",
+      "belt_level": "blue",
+      "competition_relevance": "high",
+      "source": "Universal BJJ curriculum, BJJ World blue belt (X-Pass variant)"
+    },
+    {
+      "id": "double_under_pass",
+      "name": "Double Under Pass (Stack Pass)",
+      "domain": "passing",
+      "position": "guard_top",
+      "type": "guard_pass",
+      "belt_level": "blue",
+      "competition_relevance": "high",
+      "source": "Jay Pages curriculum, universal BJJ"
+    },
+    {
+      "id": "over_under_pass",
+      "name": "Over-Under Pass",
+      "domain": "passing",
+      "position": "guard_top",
+      "type": "guard_pass",
+      "belt_level": "purple",
+      "competition_relevance": "high",
+      "notes": "Close-distance pass; close-distance passes succeed 2x more than mid/long-distance in ADCC",
+      "source": "Jay Pages curriculum, BJJ World purple belt"
+    },
+    {
+      "id": "leg_drag_pass",
+      "name": "Leg Drag Pass",
+      "domain": "passing",
+      "position": "guard_top",
+      "type": "guard_pass",
+      "belt_level": "purple",
+      "competition_relevance": "very_high",
+      "source": "BJJ World purple belt curriculum, Danaher system"
+    },
+    {
+      "id": "half_guard_pressure_pass",
+      "name": "Half Guard Pressure Pass (Smash Pass)",
+      "domain": "passing",
+      "position": "half_guard",
+      "type": "guard_pass",
+      "belt_level": "blue",
+      "competition_relevance": "very_high",
+      "notes": "Dominates ADCC competitions",
+      "source": "ADCC data, Jay Pages curriculum"
+    },
+    {
+      "id": "backstep_pass",
+      "name": "Backstep Pass",
+      "domain": "passing",
+      "position": "guard_top",
+      "type": "guard_pass",
+      "belt_level": "purple",
+      "competition_relevance": "high",
+      "source": "BJJ World purple belt curriculum"
+    },
+    {
+      "id": "sao_paulo_pass",
+      "name": "Sao Paulo Pass (Folding Pass)",
+      "domain": "passing",
+      "position": "guard_top",
+      "type": "guard_pass",
+      "belt_level": "purple",
+      "competition_relevance": "medium",
+      "source": "BJJ World purple belt curriculum"
+    },
+    {
+      "id": "standing_guard_break",
+      "name": "Standing Guard Break & Pass",
+      "domain": "passing",
+      "position": "closed_guard",
+      "type": "guard_pass",
+      "belt_level": "white",
+      "competition_relevance": "high",
+      "source": "Universal fundamental, Jay Pages curriculum"
+    },
+
+    {
+      "id": "bridge_and_roll_escape",
+      "name": "Bridge and Roll (Upa) Escape from Mount",
+      "domain": "control_escapes",
+      "position": "mount",
+      "type": "escape",
+      "belt_level": "white",
+      "competition_relevance": "high",
+      "source": "Ribeiro Blue Belt chapter, universal curriculum, Jay Pages"
+    },
+    {
+      "id": "elbow_escape_mount",
+      "name": "Elbow-Knee Escape (Shrimp) from Mount",
+      "domain": "control_escapes",
+      "position": "mount",
+      "type": "escape",
+      "belt_level": "white",
+      "competition_relevance": "high",
+      "source": "Ribeiro Blue Belt chapter, universal curriculum"
+    },
+    {
+      "id": "side_control_shrimp_escape",
+      "name": "Frame and Shrimp Escape from Side Control",
+      "domain": "control_escapes",
+      "position": "side_control",
+      "type": "escape",
+      "belt_level": "white",
+      "competition_relevance": "high",
+      "source": "Ribeiro Blue Belt chapter, universal curriculum"
+    },
+    {
+      "id": "back_escape_to_guard",
+      "name": "Back Escape (Slide to Guard)",
+      "domain": "control_escapes",
+      "position": "back_control",
+      "type": "escape",
+      "belt_level": "blue",
+      "competition_relevance": "high",
+      "source": "Ribeiro Blue Belt chapter, Jay Pages curriculum"
+    },
+    {
+      "id": "knee_on_belly_escape",
+      "name": "Knee on Belly Escape (Running Escape)",
+      "domain": "control_escapes",
+      "position": "knee_on_belly",
+      "type": "escape",
+      "belt_level": "blue",
+      "competition_relevance": "medium",
+      "source": "Ribeiro Blue Belt chapter"
+    },
+    {
+      "id": "turtle_sit_out",
+      "name": "Turtle Sit-Out Escape",
+      "domain": "control_escapes",
+      "position": "turtle",
+      "type": "escape",
+      "belt_level": "blue",
+      "competition_relevance": "medium",
+      "source": "BJJ World blue belt curriculum"
+    },
+    {
+      "id": "ghost_escape",
+      "name": "Ghost Escape",
+      "domain": "control_escapes",
+      "position": "side_control",
+      "type": "escape",
+      "belt_level": "purple",
+      "competition_relevance": "medium",
+      "source": "BJJ World purple belt curriculum"
+    },
+
+    {
+      "id": "rear_naked_choke",
+      "name": "Rear Naked Choke (RNC)",
+      "domain": "submissions",
+      "position": "back_control",
+      "type": "choke",
+      "belt_level": "white",
+      "competition_relevance": "very_high",
+      "competition_stats": {
+        "ibjjf_2023_percentage": "45% of all submissions",
+        "adcc_2023_percentage": "20% of all submissions",
+        "ufc_percentage": "49.63% of all choke finishes"
+      },
+      "notes": "King of all submissions. #1 highest percentage submission across all rulesets.",
+      "source": "IBJJF 2023, ADCC 2023, Danaher Straight Jacket System"
+    },
+    {
+      "id": "armbar",
+      "name": "Armbar (Juji Gatame)",
+      "domain": "submissions",
+      "position": "mount",
+      "type": "joint_lock",
+      "also_from": ["closed_guard", "side_control", "back_control"],
+      "belt_level": "white",
+      "competition_relevance": "very_high",
+      "competition_stats": {
+        "ibjjf_2023_percentage": "21% of all submissions",
+        "overall_share": "~20% of all submissions across datasets",
+        "finish_rate": "50% (68/137 attempts)",
+        "gi_finish_rate": "60%",
+        "nogi_finish_rate": "40%"
+      },
+      "source": "IBJJF 2023, Danaher ETS: Armbars, universal curriculum"
+    },
+    {
+      "id": "triangle_choke",
+      "name": "Triangle Choke (Sankaku Jime)",
+      "domain": "submissions",
+      "position": "closed_guard",
+      "type": "choke",
+      "also_from": ["mount", "back_control", "spider_guard"],
+      "belt_level": "blue",
+      "competition_relevance": "very_high",
+      "competition_stats": {
+        "ibjjf_2023": "3rd most common submission",
+        "success_rate": "~38%"
+      },
+      "source": "IBJJF 2023, Danaher ETS: Triangles, universal curriculum"
+    },
+    {
+      "id": "guillotine_choke",
+      "name": "Guillotine Choke",
+      "domain": "submissions",
+      "position": "front_headlock",
+      "type": "choke",
+      "also_from": ["closed_guard", "standing"],
+      "belt_level": "blue",
+      "competition_relevance": "high",
+      "competition_stats": {
+        "notes": "Most attempted submission but only 9.3% finish rate",
+        "ufc_percentage": "21% of choke finishes"
+      },
+      "source": "Danaher ETS: Front Headlocks, BJJ Equipment stats"
+    },
+    {
+      "id": "kimura",
+      "name": "Kimura (Double Wristlock)",
+      "domain": "submissions",
+      "position": "side_control",
+      "type": "joint_lock",
+      "also_from": ["closed_guard", "half_guard", "north_south"],
+      "belt_level": "white",
+      "competition_relevance": "high",
+      "competition_stats": {
+        "notes": "Top 5 most common submission overall"
+      },
+      "source": "Danaher ETS: Kimuras, IBJJF data, universal curriculum"
+    },
+    {
+      "id": "americana",
+      "name": "Americana (Keylock / Ude Garami)",
+      "domain": "submissions",
+      "position": "mount",
+      "type": "joint_lock",
+      "also_from": ["side_control"],
+      "belt_level": "white",
+      "competition_relevance": "medium",
+      "competition_stats": {
+        "success_rate": "70%"
+      },
+      "source": "Universal white belt curriculum, Jay Pages"
+    },
+    {
+      "id": "cross_collar_choke",
+      "name": "Cross Collar Choke",
+      "domain": "submissions",
+      "position": "mount",
+      "type": "choke",
+      "also_from": ["closed_guard", "back_control"],
+      "belt_level": "white",
+      "competition_relevance": "high",
+      "competition_stats": {
+        "collar_choke_success_rate": "75% (gi)"
+      },
+      "notes": "Gi-only. Collar chokes dominate gi competition.",
+      "source": "IBJJF gi data, Jay Pages curriculum"
+    },
+    {
+      "id": "bow_and_arrow_choke",
+      "name": "Bow and Arrow Choke",
+      "domain": "submissions",
+      "position": "back_control",
+      "type": "choke",
+      "belt_level": "purple",
+      "competition_relevance": "very_high",
+      "competition_stats": {
+        "ibjjf_2019_success_rate": "89%"
+      },
+      "notes": "Gi-only. Highest success rate of any submission at 2019 IBJJF Worlds.",
+      "source": "IBJJF 2019 data, BJJ World purple belt"
+    },
+    {
+      "id": "darce_choke",
+      "name": "D'Arce Choke (Brabo Choke)",
+      "domain": "submissions",
+      "position": "front_headlock",
+      "type": "choke",
+      "also_from": ["side_control", "half_guard"],
+      "belt_level": "purple",
+      "competition_relevance": "high",
+      "source": "Jay Pages curriculum, BJJ World purple belt"
+    },
+    {
+      "id": "arm_triangle",
+      "name": "Arm Triangle (Kata Gatame)",
+      "domain": "submissions",
+      "position": "side_control",
+      "type": "choke",
+      "also_from": ["mount"],
+      "belt_level": "blue",
+      "competition_relevance": "high",
+      "source": "Jay Pages curriculum (katagatame), BJJ World purple belt"
+    },
+    {
+      "id": "omoplata",
+      "name": "Omoplata",
+      "domain": "submissions",
+      "position": "closed_guard",
+      "type": "joint_lock",
+      "also_from": ["open_guard"],
+      "belt_level": "blue",
+      "competition_relevance": "medium",
+      "source": "IBJJF official technique list, Jay Pages curriculum"
+    },
+    {
+      "id": "ezekiel_choke",
+      "name": "Ezekiel Choke",
+      "domain": "submissions",
+      "position": "mount",
+      "type": "choke",
+      "also_from": ["side_control", "closed_guard"],
+      "belt_level": "blue",
+      "competition_relevance": "medium",
+      "source": "Jay Pages curriculum, BJJ World purple belt"
+    },
+    {
+      "id": "loop_choke",
+      "name": "Loop Choke",
+      "domain": "submissions",
+      "position": "front_headlock",
+      "type": "choke",
+      "belt_level": "purple",
+      "competition_relevance": "low",
+      "source": "BJJ World purple belt curriculum"
+    },
+    {
+      "id": "straight_ankle_lock",
+      "name": "Straight Ankle Lock (Achilles Lock)",
+      "domain": "submissions",
+      "position": "leg_entanglements",
+      "type": "leg_lock",
+      "belt_level": "blue",
+      "competition_relevance": "high",
+      "notes": "Only leg lock legal at all belt levels in IBJJF gi. Ribeiro includes at end of Purple Belt chapter.",
+      "source": "IBJJF rules, Danaher ETS: Leg Locks, Ribeiro"
+    },
+    {
+      "id": "heel_hook",
+      "name": "Inside Heel Hook",
+      "domain": "submissions",
+      "position": "leg_entanglements",
+      "type": "leg_lock",
+      "belt_level": "brown",
+      "competition_relevance": "very_high",
+      "competition_stats": {
+        "adcc_2023_percentage": "21% of all submissions - #1 in ADCC"
+      },
+      "notes": "Illegal in IBJJF gi. Legal in ADCC and most no-gi rulesets. Danaher's signature system.",
+      "source": "ADCC 2023 data, Danaher ETS: Leg Locks"
+    },
+    {
+      "id": "toe_hold",
+      "name": "Toe Hold",
+      "domain": "submissions",
+      "position": "leg_entanglements",
+      "type": "leg_lock",
+      "belt_level": "brown",
+      "competition_relevance": "medium",
+      "notes": "Legal at brown belt+ in IBJJF gi.",
+      "source": "IBJJF rules, BJJ World purple belt curriculum"
+    },
+    {
+      "id": "kneebar",
+      "name": "Kneebar",
+      "domain": "submissions",
+      "position": "leg_entanglements",
+      "type": "leg_lock",
+      "belt_level": "brown",
+      "competition_relevance": "medium",
+      "notes": "Legal at brown belt+ in IBJJF gi.",
+      "source": "IBJJF rules, BJJ World purple belt curriculum"
+    },
+    {
+      "id": "wristlock",
+      "name": "Wristlock",
+      "domain": "submissions",
+      "position": "mount",
+      "type": "joint_lock",
+      "also_from": ["closed_guard", "side_control"],
+      "belt_level": "purple",
+      "competition_relevance": "low",
+      "source": "BJJ World purple belt curriculum"
+    },
+    {
+      "id": "north_south_choke",
+      "name": "North-South Choke",
+      "domain": "submissions",
+      "position": "north_south",
+      "type": "choke",
+      "belt_level": "purple",
+      "competition_relevance": "medium",
+      "source": "Common competition technique"
+    },
+    {
+      "id": "anaconda_choke",
+      "name": "Anaconda Choke",
+      "domain": "submissions",
+      "position": "front_headlock",
+      "type": "choke",
+      "belt_level": "purple",
+      "competition_relevance": "medium",
+      "competition_stats": {
+        "ufc_loss_of_consciousness_rate": "~35%"
+      },
+      "source": "BJJ Equipment stats, common front headlock system technique"
+    },
+    {
+      "id": "baseball_bat_choke",
+      "name": "Baseball Bat Choke",
+      "domain": "submissions",
+      "position": "knee_on_belly",
+      "type": "choke",
+      "also_from": ["side_control"],
+      "belt_level": "purple",
+      "competition_relevance": "medium",
+      "notes": "Gi-only.",
+      "source": "Common gi competition technique"
+    }
+  ],
+
+  "taxonomy_summary": {
+    "domains": 5,
+    "positions": 19,
+    "techniques": 50,
+    "technique_breakdown": {
+      "takedowns": 9,
+      "sweeps": 12,
+      "guard_passes": 10,
+      "escapes": 7,
+      "submissions": 22
+    },
+    "belt_distribution": {
+      "white": 12,
+      "blue": 18,
+      "purple": 14,
+      "brown": 5,
+      "black": 1
+    }
+  },
+
+  "reference_frameworks": {
+    "ribeiro_progression": {
+      "white_belt": "Survival - defensive posture from mount, side control, back, knee-on-belly",
+      "blue_belt": "Escapes - back escapes, mount escapes, side control escapes, knee-on-belly escape, submission defense (armbar, triangle, guillotine, footlock, kimura)",
+      "purple_belt": "Guard - closed guard (vs kneeling/standing), butterfly guard, spider guard, cross-grip guard, De La Riva guard, sit-up guard, reverse DLR, half guard",
+      "brown_belt": "Guard Passing - passes for butterfly, spider, cross-grip, DLR, sit-up, reverse DLR, inverted, x-guard, half guard",
+      "black_belt": "Submissions - from back, mount, side control, turtle, half guard, guard"
+    },
+    "danaher_systems": {
+      "enter_the_system": ["Leg Locks (Ashi Garami family)", "Back Attacks (Straight Jacket)", "Front Headlocks (Guillotines/Darces)", "Triangles", "Kimuras", "Armbars"],
+      "new_wave_nogi": ["Submission Escapes", "Positional Escapes", "Open Guard Vol 1 & 2", "Half Guard", "Closed Guard", "No-Gi Guard Passing", "Side Attacks", "Mounted Pin Attacks"],
+      "go_further_faster_gi": ["Pin Escapes & Turtle Escapes", "Guard Retention", "Half Guard", "Closed Guard", "Open Guard", "Passing the Guard", "Half Guard Passing & Dynamic Pins", "Strangles & Turtle Breakdowns"],
+      "four_step_system": ["1. Take opponent to ground", "2. Get past legs (guard)", "3. Hierarchy of pins (side control → knee on belly → mount → back)", "4. Apply submission"],
+      "positional_hierarchy": "Standing → Takedown → Guard Top → Pass → Side Control → Knee on Belly → Mount → Back Control → Submission"
+    },
+    "ibjjf_competition_data": {
+      "top_submissions_gi_2023": {
+        "1": "Rear Naked Choke / Back Chokes (45%)",
+        "2": "Armbar (21%)",
+        "3": "Triangle Choke",
+        "4": "Bow and Arrow Choke",
+        "5": "Collar Chokes"
+      },
+      "top_submissions_nogi_adcc_2023": {
+        "1": "Inside Heel Hook (21%)",
+        "2": "Rear Naked Choke (20%)",
+        "3": "Guillotine",
+        "4": "Armbar",
+        "5": "Leg locks general (28-30% of all finishes)"
+      },
+      "scoring_actions_ibjjf_2022": {
+        "sweeps": 252,
+        "guard_passes": 46,
+        "takedowns": 28,
+        "sweep_to_pass_ratio": "5.5:1"
+      },
+      "key_insights": [
+        "Guard pass gives 99.6% win probability",
+        "40% of back takes come during guard passing attempts",
+        "Close-distance passes succeed 2x more than long-distance",
+        "51% of submissions from top, 49% from bottom",
+        "Chokes = 53% of finishes, arm locks ~24%, leg locks ~23%"
+      ]
+    },
+    "ibjjf_leg_lock_legality": {
+      "white_to_blue": "Straight ankle lock only",
+      "purple": "Straight ankle lock only (gi), calf slicer added at some events",
+      "brown_to_black": "Straight ankle lock, kneebar, toe hold, calf slicer (gi). Heel hooks legal in no-gi at brown/black.",
+      "adcc_nogi": "All leg locks legal at all levels"
+    }
+  }
+}

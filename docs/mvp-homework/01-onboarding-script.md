@@ -1,210 +1,128 @@
-# Onboarding Script Template
+# Onboarding Script -- COMPLETED
 
-**Purpose**: Define the exact conversation flow when a new user signs up.
-
-**Goal**: Get essential info in <3 minutes without feeling like a boring form.
-
----
-
-## Instructions
-
-Fill in the exact questions Musashi asks, the button options users see, and the order of questions.
-
-**Format**:
-```
-Musashi: "[EXACT QUESTION TEXT]"
-Options: [Button 1] [Button 2] [Button 3]
-OR
-Input Type: [Free text / Date picker / etc.]
-
-[User responds]
-
-Musashi: "[FOLLOW-UP OR NEXT QUESTION]"
-```
+**Status**: COMPLETE
+**Completed by**: Research-driven design (March 2026)
+**Target**: Complete in under 2.5 minutes (7 steps, mostly quick-select)
 
 ---
 
 ## Onboarding Flow
 
 ### Step 1: Welcome Message
-**Musashi**: 
-```
-[Write the exact welcome message here]
-Example: "Hey! I'm Musashi, your BJJ coach. I'll help you track your progress, 
-identify your strengths and weaknesses, and level up your game. Let's get started!"
-```
 
-**User Action**: [Tap "Let's go" button / Auto-advance after 2 seconds?]
+**Musashi**:
+"Hey -- I'm Musashi, your BJJ coach. I'll track your training, spot patterns in your game, and tell you what to work on next. Let's get to know each other. Takes about 2 minutes."
+
+**User Action**: [Let's go]
 
 ---
 
 ### Step 2: Belt Rank
-**Musashi**: 
-```
-[Write the exact question]
-Example: "First things first—what's your current belt rank?"
-```
 
-**Options**: 
-```
-[List the exact button labels]
-Example:
+**Musashi**:
+"What belt are you wearing right now?"
+
+**Options** (single-select buttons):
 [White Belt] [Blue Belt] [Purple Belt] [Brown Belt] [Black Belt]
-```
 
-**Follow-up** (if White Belt):
-```
-[Optional: Does Musashi say anything different to white belts vs black belts?]
-Example: "Great! We'll focus on defense and fundamentals."
-```
+**Follow-up by belt**:
+- White: "Welcome to the journey. We'll focus on survival, defense, and building your confidence."
+- Blue: "The real work starts here. Let's make sure you don't become a statistic -- we'll build your game."
+- Purple: "Time to get creative. Let's sharpen your A-game and patch the holes."
+- Brown/Black: "You know the art. I'll help you see patterns in your data you might miss in the grind."
 
 ---
 
 ### Step 3: Experience Duration
-**Musashi**: 
-```
-[Write the exact question]
-Example: "How long have you been training?"
-```
 
-**Options**: 
-```
-[List the exact button labels]
-Example:
-[< 6 months] [6-12 months] [1-2 years] [2-3 years] [3+ years]
-```
+**Musashi**:
+"How long have you been training?"
+
+**Options** (single-select buttons):
+[Less than 6 months] [6-12 months] [1-2 years] [2-3 years] [3-5 years] [5+ years]
 
 ---
 
 ### Step 4: Training Frequency
-**Musashi**: 
-```
-[Write the exact question]
-```
 
-**Options**: 
-```
-[List options]
-Example:
-[1-2 days/week] [3-4 days/week] [5-6 days/week] [7+ days/week]
-```
+**Musashi**:
+"How many days a week do you typically train?"
+
+**Options** (single-select buttons):
+[1-2 days] [3-4 days] [5-6 days] [Every day]
 
 ---
 
 ### Step 5: Goals
-**Musashi**: 
-```
-[Write the exact question]
-Example: "What are you hoping to achieve in the next 6 months? 
-(It's okay to have multiple goals!)"
-```
 
-**Input Type**: 
-```
-[Free text / Pre-written goals with multi-select?]
+**Musashi**:
+"What are you working toward right now? Pick your top priorities."
 
-Option A: Free text input
-Option B: Multi-select from common goals:
-  [ ] Get promoted to next belt
-  [ ] Compete in a tournament
-  [ ] Improve guard retention
-  [ ] Develop a signature submission
-  [ ] Train more consistently
-  [ ] Reduce injuries
-  [ ] Other: [text input]
-```
-
-**Your Choice**: [Specify which approach you prefer]
+**Options** (multi-select, pick 1-3):
+- [ ] Get promoted to next belt
+- [ ] Compete in a tournament
+- [ ] Improve guard retention
+- [ ] Develop a submission game
+- [ ] Train more consistently
+- [ ] Recover from / prevent injuries
+- [ ] Build confidence on the mats
+- [ ] Get in better shape for rolling
+- [ ] Other: [free text input]
 
 ---
 
-### Step 6: Top Weaknesses
-**Musashi**: 
-```
-[Write the exact question]
-Example: "What positions or situations give you the most trouble right now? 
-Pick your top 2-3."
-```
+### Step 6: Biggest Struggles
 
-**Options**: 
-```
-[List 10-15 common struggle areas, allow multi-select]
-Example:
-[ ] Escaping mount
-[ ] Escaping side control
-[ ] Guard retention (getting passed)
-[ ] Passing guard
-[ ] Defending submissions (getting tapped a lot)
-[ ] Cardio / gassing out
-[ ] Competition nerves
-[ ] Remembering techniques
-[ ] Other: [text input]
-```
+**Musashi**:
+"What gives you the most trouble right now? Pick your top 2-3."
+
+**Options** (multi-select, pick 2-3):
+- [ ] Escaping mount
+- [ ] Escaping side control
+- [ ] Escaping back control
+- [ ] Guard retention (getting passed)
+- [ ] Passing guard
+- [ ] Finishing submissions
+- [ ] Cardio / gassing out
+- [ ] Takedowns / standing game
+- [ ] Remembering techniques under pressure
+- [ ] Competition nerves
+- [ ] Staying motivated
+- [ ] Other: [free text input]
 
 ---
 
-### Step 7: Current Physical/Mental State
-**Musashi**: 
-```
-[Write the exact question]
-Example: "Last question—how are you feeling right now? 
-Any injuries, soreness, or just general vibes?"
-```
+### Step 7: Wrap-Up & First Recommendation
 
-**Input Type**: 
-```
-[Free text / Structured quick-checks?]
+**Musashi** (dynamically generated based on belt + goals + struggles):
 
-Option A: Free text
-Option B: Quick checks:
-  Energy level: [🔥 Great] [😊 Good] [😐 Average] [😓 Low]
-  Sleep quality: [😴 Great] [🙂 Decent] [😑 Poor]
-  Injuries/soreness: [None] [Minor] [Recovering from injury]
-  Optional notes: [text input]
-```
+Example for a blue belt who struggles with guard retention and wants to compete:
+"Got it. You're a blue belt working toward competition with guard retention as your main hole. That's a solvable problem. Here's your first focus: before your next session, watch this guard retention breakdown from Lachlan Giles -- [video link]. It's 10 minutes and covers the frames that matter most. Ready to log a session, or training tomorrow?"
 
-**Your Choice**: [Specify which approach]
+**Options**:
+[I just trained!] [Training tomorrow]
+
+- **"I just trained!"** -> Opens logging flow immediately
+- **"Training tomorrow"** -> Shows dashboard (empty state with encouraging message: "Your first session log will go here. Train hard tomorrow.")
 
 ---
 
-### Step 8: Wrap-Up & First Recommendation
-**Musashi**: 
-```
-[Write the exact closing message]
-Example: "Perfect! I've got a good picture of where you're at. 
-Based on what you've told me, here's what I'd focus on this week: [specific drill/concept].
+## Design Notes
 
-Ready to log your first session?"
-```
-
-**Options**: 
-```
-[I just trained!] [I'll train tomorrow]
-```
-
-**If "I just trained!"**: → Take user directly to logging flow  
-**If "I'll train tomorrow"**: → Show dashboard (empty state)
+**Total steps**: 7 (including welcome and wrap-up)
+**Estimated time**: 1.5-2.5 minutes
+**Input types**: 5 quick-select, 2 multi-select, 0 required free text (optional "Other" fields only)
+**No physical/mental state questions at onboarding** -- that's captured per-session in the logging flow. Onboarding should be fast and painless.
+**No weight class question** -- deferred to Phase 2 competition prep features.
 
 ---
 
-## Questions for You
+## Completion Checklist
 
-1. **How many questions is too many?** (Aim for 5-7 max)
-2. **Should goals be free text or pre-selected options?** (Free text = more personal but slower)
-3. **Do you want to ask about competition experience?** (Yes/No, and if yes, what exactly?)
-4. **Should we ask weight class?** (Useful for competition prep features in Phase 2)
-5. **Any other info you think is critical to know upfront?**
-
----
-
-## ✅ Completion Checklist
-
-- [ ] All questions filled in with exact wording
-- [ ] Button labels specified for each quick-select question
-- [ ] Decided on free text vs structured input for goals/state
-- [ ] Wrap-up message written
-- [ ] Total estimated time: _____ minutes (aim for <3)
-
----
-
-**Once complete, move to [02-logging-flow.md](./02-logging-flow.md)**
+- [x] All questions filled in with exact wording
+- [x] Button labels specified for each question
+- [x] Multi-select vs single-select specified per question
+- [x] Belt-specific follow-up messages written
+- [x] Wrap-up message is dynamic (references user's belt + struggles)
+- [x] Post-onboarding routing defined (log now vs dashboard)
+- [x] Estimated time: under 2.5 minutes

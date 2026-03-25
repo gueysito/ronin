@@ -8,9 +8,9 @@ MatMentor helps BJJ practitioners master both the physical and mental aspects of
 
 ## 📋 Project Status
 
-**Current Phase**: Pre-Development (Scaffolding)  
-**Version**: 0.1.0 (MVP Planning)  
-**Last Updated**: October 13, 2025
+**Current Phase**: Pre-Development (Scaffolding)
+**Version**: 0.1.0 (MVP Planning)
+**Last Updated**: March 24, 2026
 
 - ✅ Product vision defined
 - ✅ Architecture decisions locked in
@@ -48,66 +48,67 @@ An AI coach that makes logging feel like talking to a mentor, provides data-driv
 ## 🏗️ Tech Stack
 
 ### Frontend
-- **Framework**: Next.js 14 (App Router) + React 18
+- **Framework**: SvelteKit + Svelte 5 (runes)
 - **Language**: TypeScript (strict mode)
 - **Styling**: Tailwind CSS
-- **UI Components**: shadcn/ui + Radix UI (accessible by default)
-- **Charts**: Recharts
+- **UI Components**: shadcn-svelte (bits-ui — accessible by default)
+- **Charts**: Layer Cake
 - **Forms/Validation**: Zod
 
 ### Backend
-- **API**: Next.js API Routes (serverless)
-- **Database**: PostgreSQL 15+ (with pgvector for Phase 1.5)
-- **ORM**: Prisma
-- **Auth**: Clerk
+- **Platform**: Supabase (PostgreSQL + Auth + pgvector + Edge Functions)
+- **ORM**: Drizzle
+- **Auth**: Supabase Auth
 - **Payments**: Stripe
 
 ### AI / LLM
-- **Provider**: OpenAI
-- **Models**: 
-  - GPT-4o-mini (chat, ~$0.30/user/month)
-  - Whisper (voice transcription, Phase 1.5)
+- **SDK**: Vercel AI SDK (SvelteKit adapter — streaming, tool calling, provider switching)
+- **Models**:
+  - Claude Haiku 4.5 or GPT-4.1-mini (chat)
+  - Groq Whisper (voice transcription, Phase 1.5)
 - **Memory**: Simple session history (MVP) → pgvector RAG (Phase 1.5)
 
 ### Infrastructure
-- **Hosting (MVP)**: VPS + Coolify (Docker-based deployments)
-- **Hosting (Scale)**: Vercel (frontend) + VPS (database)
+- **Hosting**: Vercel (SvelteKit adapter, edge rendering, auto-deploy)
+- **Database**: Supabase (hosted Postgres)
 - **Monitoring**: PostHog (analytics) + Sentry (errors)
-- **Backups**: Daily pg_dump → S3/Backblaze B2
+- **Backups**: Supabase daily backups + manual pg_dump → S3/Backblaze B2
 
 ---
 
 ## 📂 Project Structure
 
 ```
-ronin-bjj-warp/
-├── app/                    # Next.js App Router (pages, layouts)
-│   ├── (auth)/            # Auth-related routes (sign-in, sign-up)
-│   ├── (dashboard)/       # Protected dashboard routes
-│   ├── api/               # API routes (chat, stats, payments)
-│   └── layout.tsx         # Root layout
-├── components/            # React components
-│   ├── ui/                # shadcn/ui components
-│   ├── chat/              # Chat-specific components
-│   ├── dashboard/         # Dashboard widgets
-│   └── shared/            # Reusable components
-├── lib/                   # Utilities, helpers, business logic
-│   ├── ai/                # LLM integration, prompts
-│   ├── db/                # Database utilities
-│   ├── normalizers/       # Input parsing (technique mapping)
-│   └── utils/             # General utilities
-├── prisma/                # Database schema and migrations
-│   ├── schema.prisma      # Prisma schema (source of truth)
-│   ├── migrations/        # Migration history
-│   └── seed.ts            # Seed data (techniques, positions, videos)
-├── public/                # Static assets (images, icons)
-├── docs/                  # Documentation
-│   ├── mvp-homework/      # User templates (onboarding, system prompt, etc.)
-│   └── architecture/      # Technical documentation
-├── DECISIONS.md           # Architectural decisions log
-├── ROADMAP.md             # Detailed task breakdown
-├── PRD.md                 # Product requirements document
-└── README.md              # This file
+ronin/
+├── src/
+│   ├── routes/                # SvelteKit pages + server routes
+│   │   ├── (auth)/            # Auth-related routes (sign-in, sign-up)
+│   │   ├── (dashboard)/       # Protected dashboard routes
+│   │   ├── api/               # API endpoints (+server.ts files)
+│   │   └── +layout.svelte     # Root layout
+│   └── lib/
+│       ├── components/        # Svelte components
+│       │   ├── ui/            # shadcn-svelte components
+│       │   ├── chat/          # Chat-specific components
+│       │   ├── dashboard/     # Dashboard widgets
+│       │   └── shared/        # Reusable components
+│       ├── server/            # Server-only code
+│       │   ├── ai/            # LLM integration, prompts
+│       │   ├── db/            # Drizzle client, queries
+│       │   └── normalizers/   # Input parsing (technique mapping)
+│       └── utils/             # Shared utilities
+├── drizzle/                   # Database schema and migrations
+│   ├── schema.ts              # Drizzle schema (source of truth)
+│   ├── migrations/            # Migration history
+│   └── seed.ts                # Seed data (techniques, positions, videos)
+├── static/                    # Static assets (images, icons)
+├── docs/                      # Documentation
+│   ├── mvp-homework/          # User templates (onboarding, system prompt, etc.)
+│   └── architecture/          # Technical documentation
+├── DECISIONS.md               # Architectural decisions log
+├── ROADMAP.md                 # Detailed task breakdown
+├── PRD.md                     # Product requirements document
+└── README.md                  # This file
 ```
 
 ---
@@ -116,10 +117,9 @@ ronin-bjj-warp/
 
 ### Prerequisites
 
-- Node.js 18+ and npm/yarn
-- PostgreSQL 15+ (local or hosted)
-- OpenAI API key
-- Clerk account (for auth)
+- Node.js 20+ (or Bun)
+- Supabase account (database + auth)
+- Anthropic or OpenAI API key (for Musashi AI)
 - Stripe account (for payments)
 
 ### Installation
@@ -127,20 +127,20 @@ ronin-bjj-warp/
 ```bash
 # Clone the repository
 git clone <repo-url>
-cd ronin-bjj-warp
+cd ronin
 
 # Install dependencies
 npm install
 
 # Set up environment variables
 cp .env.example .env
-# Edit .env with your API keys and database URL
+# Edit .env with your Supabase URL, API keys, and Stripe keys
 
-# Set up database
-npx prisma migrate dev
+# Push database schema
+npx drizzle-kit push
 
-# Seed initial data (techniques, positions)
-npx prisma db seed
+# Seed initial data (techniques, positions, videos)
+npx tsx drizzle/seed.ts
 
 # Run development server
 npm run dev
@@ -252,22 +252,22 @@ docs: Update system prompt examples
 # Development
 npm run dev              # Start dev server
 npm run build            # Build for production
-npm run start            # Start production server
+npm run preview          # Preview production build locally
 
 # Database
-npx prisma studio        # Open Prisma Studio (DB GUI)
-npx prisma migrate dev   # Create and apply migration
-npx prisma db seed       # Seed database with initial data
-npx prisma generate      # Regenerate Prisma Client
+npx drizzle-kit studio   # Open Drizzle Studio (DB GUI)
+npx drizzle-kit push     # Push schema changes to database
+npx drizzle-kit generate # Generate migration files
+npx tsx drizzle/seed.ts  # Seed database with initial data
 
 # Code Quality
 npm run lint             # Run ESLint
 npm run format           # Run Prettier
-npm run type-check       # TypeScript type checking
+npm run check            # SvelteKit type checking (svelte-check)
 
 # Testing (Phase 1.5+)
-npm run test             # Run unit tests
-npm run test:e2e         # Run E2E tests
+npm run test             # Run unit tests (Vitest)
+npm run test:e2e         # Run E2E tests (Playwright)
 ```
 
 ---
@@ -328,5 +328,5 @@ Currently a solo project. Post-launch, contributions welcome for:
 
 ---
 
-**Last Updated**: October 13, 2025  
+**Last Updated**: March 24, 2026
 **Version**: 0.1.0-alpha

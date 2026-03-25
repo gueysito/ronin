@@ -33,33 +33,36 @@
 
 ## 🏗️ Technical Architecture Decisions
 
-### Tech Stack (Final)
+### Tech Stack (Final) — Revised March 2026
 
 | Category | Technology | Rationale | Alternatives Rejected |
 |----------|-----------|-----------|---------------------|
-| **Framework** | Next.js 14+ (App Router) | Industry standard, great DX, built-in API routes | Remix (smaller ecosystem) |
+| **Framework** | SvelteKit | Less boilerplate, smaller bundles (mobile-first), built-in SSR/routing/API routes, excellent DX for solo dev | Next.js 15 (heavier, React ecosystem overhead), Remix (smaller ecosystem) |
 | **Language** | TypeScript (strict mode) | Type safety across full stack | JavaScript (too risky for data integrity) |
-| **API Layer** | Next.js API Routes | Simpler, more flexible, easier to debug | tRPC (locks into TS ecosystem, overkill for MVP) |
-| **Database** | PostgreSQL 15+ | Complex relational queries for Skill Tree, pgvector support | MongoDB (poor for relational analytics) |
-| **ORM** | Prisma | Best-in-class migrations, type generation | Drizzle (less mature), Raw SQL (too manual) |
-| **Validation** | Zod | Runtime type safety, works with Prisma, validates LLM outputs | Yup (less TS integration) |
-| **Auth** | Clerk | Easier setup than Auth.js, good free tier | Auth.js (more config), Supabase Auth (vendor lock-in) |
-| **UI Framework** | shadcn/ui + Radix UI | Accessible, customizable, modern | MUI (bloated), Chakra (less momentum) |
-| **Styling** | Tailwind CSS | Rapid prototyping, easy dark mode | Vanilla CSS (too slow), Styled Components (runtime cost) |
-| **Charts** | Recharts | Simple API, good docs | Chart.js (less React-friendly), D3 (overkill for MVP) |
-| **LLM Provider** | OpenAI (GPT-4o-mini) | Best cost/performance ratio ($0.15/$0.60 per 1M tokens) | Claude (more expensive), Gemini (less reliable) |
-| **Voice** | Whisper API | Accurate for BJJ terminology ($0.006/min) | Web Speech API (poor accuracy for technical terms) |
+| **UI Library** | Svelte 5 (runes) | Compiler-based reactivity, no virtual DOM, built-in transitions for chat UX | React 19 (more boilerplate, larger bundles) |
+| **API Layer** | SvelteKit server routes (+server.ts) | Co-located with pages, simple and flexible | tRPC (overkill for MVP), separate API server (unnecessary complexity) |
+| **Database** | Supabase (PostgreSQL) | Postgres + Auth + pgvector + Realtime + Edge Functions in one platform. Complex relational queries for Skill Tree, analytics aggregations | Raw Postgres (more infra to manage), Convex (document-oriented, poor for relational analytics/aggregations) |
+| **ORM** | Drizzle | Lightweight, fast, no binary engine, excellent edge/serverless compat, type-safe SQL | Prisma (heavier, binary engine, slower cold starts) |
+| **Validation** | Zod | Runtime type safety, works with Drizzle, validates LLM outputs | Yup (less TS integration) |
+| **Auth** | Supabase Auth | Bundled with DB platform, first-class SvelteKit support, eliminates separate auth vendor | Clerk (no first-class SvelteKit SDK), Auth.js (more config) |
+| **UI Components** | shadcn-svelte (bits-ui) | Accessible, customizable, Tailwind-native, Svelte-native port of shadcn | Skeleton UI (less customizable), Flowbite Svelte (heavier) |
+| **Styling** | Tailwind CSS | Rapid prototyping, easy dark mode | Vanilla CSS (too slow), UnoCSS (less ecosystem) |
+| **Charts** | Layer Cake | Svelte-native, composable, SSR-friendly | Chart.js (not Svelte-native), D3 (overkill for MVP) |
+| **AI / Chat** | Vercel AI SDK (SvelteKit adapter) | Unified streaming, tool calling, provider switching (swap LLMs without rewriting) | Raw fetch + SSE (more boilerplate, no provider abstraction) |
+| **LLM Provider** | Claude Haiku 4.5 or GPT-4.1-mini | Both cheaper and smarter than GPT-4o-mini. Haiku: $0.80/$4 per 1M tokens, 200K context. GPT-4.1-mini: $0.40/$1.60 per 1M tokens | GPT-4o-mini (dated, worse cost/performance), full Opus/Sonnet (overkill for coaching chat) |
+| **Voice** | Groq Whisper (Phase 1.5) | Same Whisper model, 10x faster inference, cheaper | OpenAI Whisper (slower, more expensive), Web Speech API (poor accuracy for BJJ terms) |
 
-### Infrastructure Decisions
+### Infrastructure Decisions — Revised March 2026
 
 | Component | Solution | Rationale |
 |-----------|----------|-----------|
-| **Hosting (MVP)** | VPS + Coolify | Low cost, full control, easy Docker deploys |
-| **Migration Path** | Frontend → Vercel (when scaling) | Keep DB on VPS, offload edge compute |
-| **DB Backups** | Daily pg_dump + S3/Backblaze B2 | $0.005/GB/month, 7-day retention |
+| **Database + Auth** | Supabase (hosted) | Postgres, auth, pgvector, edge functions — one platform, generous free tier |
+| **Hosting (MVP)** | Vercel | SvelteKit has first-class Vercel adapter, edge rendering, zero-config deploys |
+| **Hosting (Alt)** | VPS + Coolify | Fallback if Vercel costs grow; full control, Docker deploys |
+| **DB Backups** | Supabase daily backups (Pro plan) + manual pg_dump to S3/Backblaze B2 | Redundant backup strategy |
 | **Monitoring** | PostHog (analytics) + Sentry (errors) | Both have generous free tiers |
-| **CI/CD** | GitHub Actions + Coolify webhooks | Auto-deploy on push to main |
-| **SSL** | Let's Encrypt (via Coolify) | Free, auto-renewal |
+| **CI/CD** | GitHub Actions + Vercel auto-deploy | Push to main → auto-deploy |
+| **SSL** | Vercel (automatic) or Let's Encrypt (Coolify) | Free, auto-renewal |
 
 ---
 
@@ -154,11 +157,17 @@ Musashi: "How was your cardio?"
 - **Adaptation**: Detail level scales with belt rank
 - **Constraints**: No medical advice, no content outside whitelist
 
+### AI Integration (Vercel AI SDK)
+- **SDK**: Vercel AI SDK with SvelteKit adapter (`ai` + `@ai-sdk/anthropic` or `@ai-sdk/openai`)
+- **Streaming**: Built-in SSE streaming via `useChat` (SvelteKit) for real-time chat responses
+- **Provider Switching**: Can swap between Claude Haiku 4.5 and GPT-4.1-mini without code changes
+- **Tool Calling**: AI SDK supports tool use — useful for structured logging (AI extracts technique/position from free text)
+
 ### Context Management (MVP)
-- **Strategy**: Retrieve last 3-5 sessions as JSON from Postgres
+- **Strategy**: Retrieve last 3-5 sessions as JSON from Supabase via Drizzle
 - **Format**: `{ date, techniques, mood, energy, coach_feedback }`
 - **Token Budget**: ~500 tokens context per message
-- **Phase 1.5 Upgrade**: pgvector semantic search for relevant past insights
+- **Phase 1.5 Upgrade**: Supabase pgvector semantic search for relevant past insights
 
 ### Rate Limiting
 | Tier | Limit | Cost Impact |
@@ -244,13 +253,14 @@ Net profit: $8.38 (84% margin)
 
 ### File Organization
 ```
-/app                 # Next.js App Router
-/components          # React components (shadcn/ui)
-/lib                 # Utilities, AI logic, normalizers
-/prisma              # Schema + migrations
+/src/routes          # SvelteKit pages + server routes
+/src/lib             # Utilities, AI logic, normalizers, components
+/src/lib/components  # Svelte components (shadcn-svelte)
+/src/lib/server      # Server-only code (db, ai, auth)
+/drizzle             # Schema + migrations
 /docs                # Product docs + homework templates
 /docs/mvp-homework   # User's assignments
-/public              # Static assets
+/static              # Static assets
 ```
 
 ### Code Quality Standards

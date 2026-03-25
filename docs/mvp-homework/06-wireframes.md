@@ -1,497 +1,359 @@
-# Wireframes & UI Guidance Template
+# Wireframes & Screen Descriptions -- COMPLETED
 
-**Purpose**: Provide visual/descriptive guidance for the UI structure so the app feels cohesive and intuitive.
-
-**Goal**: Define what each screen looks like and how users navigate between them.
-
----
-
-## Instructions
-
-You can:
-- **Draw by hand** and take photos (perfectly fine!)
-- **Use Figma/Sketch** (if you're comfortable with design tools)
-- **Describe in detail** (if you can't draw, write exactly what's on screen)
-
-**What Matters**:
-- Layout (where are elements positioned?)
-- Navigation (how do users get from screen A to screen B?)
-- Key interactions (what happens when you tap X?)
-
-**What Doesn't Matter**:
-- Colors (I'll apply the design system)
-- Exact fonts/spacing (handled by Tailwind + shadcn/ui)
-- Pixel-perfect alignment
+**Status**: COMPLETE
+**Completed by**: Design specification (March 2026)
+**Design system**: Tailwind CSS + shadcn-svelte. Dark mode default. Mobile-first.
 
 ---
 
-## Screen Inventory
+## Navigation Structure
 
-Define these 6 core screens:
+**Bottom tab bar** (4 tabs, always visible):
+1. Chat (primary) -- Musashi conversation + logging
+2. Game -- Skill analysis (submissions, positions, strengths/weaknesses)
+3. Progress -- Consistency tracking (calendar, streaks, energy trends)
+4. Profile -- Settings, goals, subscription
 
-1. **Landing Page** (pre-signup)
-2. **Chat Screen** (primary interface)
-3. **Dashboard: Game Tab** (submission stats, skill tree preview)
-4. **Dashboard: Progress Tab** (calendar, streaks, trends)
-5. **Profile/Settings Screen**
-6. **Onboarding Flow** (chat-based, but visual structure matters)
-
----
-
-## Screen 1: Landing Page (Pre-Signup)
-
-**Purpose**: Convince visitor to sign up for free trial
-
-**Key Elements**:
-```
-[Describe or sketch what's on the landing page]
-
-Example:
-- Hero section:
-  - Headline: "Your BJJ Coach, Powered by AI"
-  - Subheadline: "Track your training, master your game, level up your mind"
-  - CTA Button: "Start Free Trial (1 week)"
-- Features section:
-  - Icon + text: "AI Feedback on Every Session"
-  - Icon + text: "Visualize Your Skill Tree"
-  - Icon + text: "Track Submissions, Cardio, Mental Game"
-- Social proof:
-  - Testimonials from beta users
-  - "Join 500+ BJJ practitioners"
-- Footer:
-  - Privacy Policy, Terms, Contact
-```
-
-**Your Wireframe**:
-```
-[Sketch or describe here]
-
-You can literally write:
-"Top: Logo on left, 'Login' button on right
-Middle: Big headline, subheadline, CTA button
-Bottom: 3 feature boxes with icons"
-
-OR
-
-[Attach a photo of hand-drawn wireframe]
-```
+**Active tab**: Highlighted icon + label. Inactive: muted icon only.
 
 ---
 
-## Screen 2: Chat Screen (Primary Interface)
+## Screen 1: Chat (Primary Interface)
 
-**Purpose**: Main interaction point—logging sessions, asking questions, seeing feedback
+This is the app's home screen. 80% of user interaction happens here.
 
-**Layout**:
+### Layout (top to bottom):
 ```
-[Describe the structure]
-
-Example:
-┌─────────────────────────────┐
-│ [Header: "Musashi" + ⚙️]   │ <- Settings icon top-right
-├─────────────────────────────┤
-│                             │
-│ Musashi: "Hey! Did you..."  │ <- AI messages (left-aligned)
-│                             │
-│       User: "Yes, I trained"│ <- User messages (right-aligned)
-│                             │
-│ Musashi: "Nice! How long?"  │
-│                             │
-│ [60 min] [90 min] [Other]   │ <- Quick-select buttons
-│                             │
-│       User: *taps 60 min*   │
-│                             │
-│ [Inline chart: Submissions] │ <- Optional: stats shown in chat
-│                             │
-├─────────────────────────────┤
-│ [Text input field]    [🎤]  │ <- Input + voice button (Phase 1.5)
-│ [Send button]               │
-├─────────────────────────────┤
-│ 🗨️Chat  📊Game  📈Progress 👤│ <- Bottom nav (4 tabs)
-└─────────────────────────────┘
++------------------------------------------+
+|  MatMentor              [Musashi avatar]  |  <- Slim header, no nav clutter
++------------------------------------------+
+|                                           |
+|  [Musashi message bubble - left aligned]  |
+|  "Did you train today?"                   |
+|                                           |
+|        [User message bubble - right]      |
+|        "Yes, I rolled"                    |
+|                                           |
+|  [Musashi message bubble]                 |
+|  "How long was your session?"             |
+|                                           |
+|  +------+ +------+ +------+              |
+|  |30 min| |45 min| |60 min|              |  <- Quick-select buttons
+|  +------+ +------+ +------+              |
+|  +------+ +------+ +---------+           |
+|  |90 min| |2 hrs | |2.5+ hrs|           |
+|  +------+ +------+ +---------+           |
+|                                           |
++------------------------------------------+
+|  [Text input field]        [Send button]  |  <- Always visible at bottom
++------------------------------------------+
+|  Chat | Game | Progress | Profile         |  <- Bottom tab bar
++------------------------------------------+
 ```
 
-**Your Wireframe**:
-```
-[Sketch or describe]
+### Key behaviors:
+- Messages scroll up as conversation grows. Latest at bottom.
+- Quick-select buttons appear inline in the chat, below Musashi's question.
+- After user taps a button, it's replaced by a user message bubble with their selection.
+- AI responses stream in token-by-token (typing indicator: "Musashi is thinking...")
+- Weekly summary messages get a distinct style: slightly different background, "Weekly Summary" label above.
+- Offline indicator banner appears above the chat when disconnected.
 
-Key Questions:
-1. Where do quick-select buttons appear? (Inline with message, or bottom sheet?)
-2. How do we show AI is typing? (3 dots animation, "Musashi is thinking...")
-3. Do past messages scroll infinitely, or paginate?
-4. Where does the "Log New Session" CTA appear if chat is empty?
-```
+### Message types:
+- **User message**: Right-aligned, primary color background, white text.
+- **Musashi message**: Left-aligned, muted/card background, with small Musashi avatar.
+- **Quick-select buttons**: Grid of outlined buttons below a Musashi message. Disappear after selection.
+- **Video recommendation**: Embedded card with thumbnail, title, instructor, duration. Tapping opens YouTube.
+- **Weekly summary**: Card-style message with distinct border/background. Includes inline stat highlights.
 
 ---
 
-## Screen 3: Dashboard - Game Tab
+## Screen 2: Game Tab (Skill Analysis)
 
-**Purpose**: Show skill analysis (submissions, positions, strengths/weaknesses)
+Answers: "What am I good at? Where are my holes?"
 
-**Layout**:
+### Layout:
 ```
-[Describe the structure]
-
-Example:
-┌─────────────────────────────┐
-│ [Header: "Your Game" + ⚙️]  │
-├─────────────────────────────┤
-│ [Submission Stats Card]     │
-│   Total: 42 (+15% vs last) │
-│   [Pie chart by type]       │
-│   Top Weapons:              │
-│   1. Armbar (12)            │
-│   2. Triangle (8)           │
-│   3. RNC (6)                │
-├─────────────────────────────┤
-│ [Position Heatmap]          │ <- Phase 2 (simplified in MVP)
-│   Guard:    ■■■■■ (Strong)  │
-│   Passing:  ■■□□□ (Weak)    │
-│   Mount:    ■■■■□           │
-├─────────────────────────────┤
-│ [Strengths vs Weaknesses]   │
-│   Strengths:                │
-│   - Closed guard retention  │
-│   - Armbar from mount       │
-│                             │
-│   Weaknesses:               │
-│   - Half guard retention    │
-│   - Passing from top        │
-└─────────────────────────────┘
++------------------------------------------+
+|  Your Game                 [Date filter]  |  <- "Last 7d / 30d / All time"
++------------------------------------------+
+|                                           |
+|  SUBMISSION STATS                         |
+|  +--------------------------------------+|
+|  | Total this period: 14  (+40%)        ||
+|  |                                      ||
+|  | [Pie chart: technique breakdown]     ||
+|  | Armbar: 5 | Triangle: 4 | RNC: 3    ||
+|  | Kimura: 2                            ||
+|  +--------------------------------------+|
+|                                           |
+|  TOP WEAPONS          COMMON HOLES        |
+|  +----------------+  +----------------+  |
+|  | 1. Armbar      |  | 1. Half guard  |  |
+|  | 2. Triangle    |  |    retention   |  |
+|  | 3. Knee cut    |  | 2. Back escape |  |
+|  |    pass        |  | 3. Takedowns   |  |
+|  +----------------+  +----------------+  |
+|                                           |
+|  POSITION BREAKDOWN                       |
+|  +--------------------------------------+|
+|  | [Horizontal bar chart]               ||
+|  | Guard (bottom): ████████ 45%         ||
+|  | Side ctrl (top): ████ 20%            ||
+|  | Mount (top): ███ 15%                 ||
+|  | Standing: ██ 10%                     ||
+|  | Back (atk): ██ 10%                   ||
+|  +--------------------------------------+|
+|                                           |
++------------------------------------------+
+|  Chat | Game | Progress | Profile         |
++------------------------------------------+
 ```
 
-**Your Wireframe**:
-```
-[Sketch or describe]
-
-Key Questions:
-1. Should stats be cards (shadcn/ui Card component) or full-width sections?
-2. Do we show time range filter at top? (Last 7 days, 30 days, All time)
-3. Where's the "Skill Tree" link/button? (Or is it a separate tab?)
-```
+### Key behaviors:
+- Date filter toggles between 7 days, 30 days, all time.
+- Pie chart is interactive: tap a slice to see technique details.
+- "Top Weapons" and "Common Holes" are computed from event data.
+- Empty state (no sessions yet): "Log your first session to see your game here. Tap Chat to get started."
+- Tapping a technique name opens a detail view: stats over time, related videos, drill suggestions.
 
 ---
 
-## Screen 4: Dashboard - Progress Tab
+## Screen 3: Progress Tab (Consistency)
 
-**Purpose**: Show consistency, training volume, energy/recovery trends
+Answers: "Am I training enough? How's my body holding up?"
 
-**Layout**:
+### Layout:
 ```
-[Describe the structure]
-
-Example:
-┌─────────────────────────────┐
-│ [Header: "Your Progress"]   │
-├─────────────────────────────┤
-│ [Training Calendar]         │
-│   Mo Tu We Th Fr Sa Su      │
-│   ■  ■  ■  □  ■  □  □       │ <- Green = trained, Gray = missed
-│   Current Streak: 3 days 🔥 │
-│   Longest Streak: 12 days   │
-├─────────────────────────────┤
-│ [Weekly Volume Chart]       │
-│   [Bar chart: Hours/week]   │
-│   This week: 4.5h (Goal: 4h)│
-├─────────────────────────────┤
-│ [Energy Trends]             │
-│   [Line graph: Energy 1-5]  │
-│   Avg this week: 3.8/5      │
-├─────────────────────────────┤
-│ [Cardio Performance]        │ <- Phase 2 (optional in MVP)
-│   [Bar chart: RPE by week]  │
-└─────────────────────────────┘
++------------------------------------------+
+|  Your Progress             [Date filter]  |
++------------------------------------------+
+|                                           |
+|  THIS WEEK                                |
+|  +--------------------------------------+|
+|  | Sessions: 3 / 4 goal  [██████░░] 75%||
+|  | Current streak: 12 days              ||
+|  | Longest streak: 18 days              ||
+|  +--------------------------------------+|
+|                                           |
+|  TRAINING CALENDAR                        |
+|  +--------------------------------------+|
+|  | [Month grid - GitHub contribution    ||
+|  |  style. Green = trained, gray = rest,||
+|  |  dark green = high intensity]        ||
+|  |                                      ||
+|  | M  T  W  T  F  S  S                 ||
+|  | .  G  .  G  G  .  .    <- this week ||
+|  | G  .  G  G  .  G  .    <- last week ||
+|  +--------------------------------------+|
+|                                           |
+|  WEEKLY VOLUME (last 8 weeks)             |
+|  +--------------------------------------+|
+|  | [Bar chart: hours trained per week]  ||
+|  | W1: ██ 3h                            ||
+|  | W2: ████ 5h                          ||
+|  | W3: ███ 4h                           ||
+|  | ...                                  ||
+|  +--------------------------------------+|
+|                                           |
+|  ENERGY & RECOVERY                        |
+|  +--------------------------------------+|
+|  | [Line chart: energy over last 30d]   ||
+|  | [Line chart: mood over last 30d]     ||
+|  | Avg energy: 3.2/5                    ||
+|  | Low energy alert: "Energy has been   ||
+|  | below average for 5 sessions.        ||
+|  | Consider a rest week."              ||
+|  +--------------------------------------+|
+|                                           |
++------------------------------------------+
+|  Chat | Game | Progress | Profile         |
++------------------------------------------+
 ```
 
-**Your Wireframe**:
-```
-[Sketch or describe]
-
-Key Questions:
-1. Should calendar be month view or week view?
-2. Do we show "goal vs actual" prominently? (e.g., "3/4 sessions this week")
-3. Where's the CTA to "Log a Session" if they're behind on their goal?
-```
+### Key behaviors:
+- Training calendar uses color intensity (like GitHub contributions) to show volume.
+- Streak counter is prominent -- gamification through visibility, not badges (Phase 2).
+- Energy trend alerts trigger when energy is below average for 3+ consecutive sessions.
+- "Last updated: [timestamp]" shown when viewing cached offline data.
 
 ---
 
-## Screen 5: Profile / Settings
+## Screen 4: Profile / Settings
 
-**Purpose**: Manage account, subscription, goals, preferences
-
-**Layout**:
+### Layout:
 ```
-[Describe the structure]
-
-Example:
-┌─────────────────────────────┐
-│ [Header: "Profile"]         │
-├─────────────────────────────┤
-│ [Profile Section]           │
-│   Alex Johnson              │
-│   Blue Belt • 2 years       │
-│   [Edit Profile button]     │
-├─────────────────────────────┤
-│ [Goals Section]             │
-│   Short-term:               │
-│   - Improve guard retention │
-│   [Edit Goals button]       │
-├─────────────────────────────┤
-│ [Subscription]              │
-│   Premium • $9.99/mo        │
-│   [Manage Subscription]     │ <- Links to Stripe portal
-├─────────────────────────────┤
-│ [Preferences]               │
-│   [ ] Email notifications   │
-│   [ ] Weekly summaries      │
-│   Theme: [Dark | Light]     │
-├─────────────────────────────┤
-│ [Data & Privacy]            │
-│   [Export My Data]          │
-│   [Delete Account]          │
-├─────────────────────────────┤
-│ [Sign Out]                  │
-└─────────────────────────────┘
-```
-
-**Your Wireframe**:
-```
-[Sketch or describe]
-
-Key Questions:
-1. Should subscription status be prominent at top, or buried?
-2. Do we show training stats summary here? (e.g., "42 total sessions logged")
-3. Where's the link to Privacy Policy / Terms of Service?
++------------------------------------------+
+|  Profile                                  |
++------------------------------------------+
+|                                           |
+|  [User avatar / initials]                |
+|  Carlos S.                                |
+|  Blue Belt | 2 years | 3-4 days/week    |
+|  [Edit profile]                           |
+|                                           |
+|  GOALS                                    |
+|  +--------------------------------------+|
+|  | - Compete in tournament              ||
+|  | - Improve guard retention            ||
+|  | [Edit goals]                         ||
+|  +--------------------------------------+|
+|                                           |
+|  SUBSCRIPTION                             |
+|  +--------------------------------------+|
+|  | Plan: Paid ($9.99/mo)               ||
+|  | Messages this week: 34 / 100        ||
+|  | [Manage subscription]                ||
+|  +--------------------------------------+|
+|                                           |
+|  SETTINGS                                 |
+|  +--------------------------------------+|
+|  | Weekly summaries     [toggle ON]     ||
+|  | Summary day          [Sunday]        ||
+|  | Training type        [Gi & No-gi]    ||
+|  | Dark mode            [toggle ON]     ||
+|  +--------------------------------------+|
+|                                           |
+|  ACCOUNT                                  |
+|  +--------------------------------------+|
+|  | Export my data (JSON)                ||
+|  | Delete my account                    ||
+|  | Privacy policy                       ||
+|  | Terms of service                     ||
+|  +--------------------------------------+|
+|                                           |
+|  [Log out]                                |
+|                                           |
++------------------------------------------+
+|  Chat | Game | Progress | Profile         |
++------------------------------------------+
 ```
 
 ---
 
-## Screen 6: Onboarding Flow (Chat-Based)
+## Screen 5: Onboarding (New User)
 
-**Purpose**: Collect user info via conversation (from your `01-onboarding-script.md`)
+Full-screen chat interface (no bottom tabs). Musashi guides through 7 steps.
 
-**Visual Structure**:
+### Layout:
+Same as Chat screen, but:
+- No bottom tab bar (focused experience)
+- Progress indicator at top: "Step 2 of 7" with thin progress bar
+- Back button to revisit previous answers
+- Skip not available (all questions are important for personalization)
+
+After onboarding completes, bottom tab bar appears and user lands on Chat tab.
+
+---
+
+## Screen 6: Landing Page (Pre-Auth)
+
+See PRD Section 12 for full copy. Layout summary:
+
+### Mobile layout (primary):
 ```
-[Describe how this differs from regular chat]
-
-Example:
-- Same chat UI, but:
-  - Progress indicator at top (e.g., "Step 2 of 6")
-  - Quick-select buttons are LARGER (easy thumb tapping)
-  - No text input for first few questions (force quick-select)
-  - "Skip" button for optional questions?
++------------------------------------------+
+| [Logo]                         [Log in]   |
++------------------------------------------+
+| "Train smarter. Know your game.           |
+|  Stop guessing."                          |
+|                                           |
+| "MatMentor is an AI coach that tracks     |
+|  your BJJ, spots your patterns, and       |
+|  tells you what to work on next."         |
+|                                           |
+| [===== Start Free Trial =====]            |
+|                                           |
+| [Chat screenshot / demo video]            |
++------------------------------------------+
+| "Sound familiar?"                         |
+| - You train 3x a week but can't tell...  |
+| - You get tapped by the same stuff...     |
+| - You have questions after class...       |
++------------------------------------------+
+| ... (remaining sections per PRD spec)     |
++------------------------------------------+
 ```
 
-**Your Wireframe**:
-```
-[Sketch or describe]
+Key: Single-column mobile layout. CTA button is full-width, high-contrast. Minimal navigation. Each section is one viewport height or less.
 
-Key Questions:
-1. Do we show a progress bar? (e.g., "40% complete")
-2. Can users go back to previous questions? (Back button, or locked in?)
-3. What happens if they close the app mid-onboarding? (Resume later, or restart?)
+---
+
+## Screen 7: Paywall / Upgrade
+
+Shown when free trial expires or message limit hit.
+
+### Layout:
+```
++------------------------------------------+
+|  Upgrade to keep training with Musashi    |
++------------------------------------------+
+|                                           |
+|  You've used your free messages this      |
+|  week. Upgrade to continue.              |
+|                                           |
+|  +--------------------------------------+|
+|  |  $9.99/month                         ||
+|  |                                      ||
+|  |  - AI coaching after every session   ||
+|  |  - 100 messages/week                 ||
+|  |  - Submission & position analytics   ||
+|  |  - Weekly personalized game plans    ||
+|  |  - Curated video recommendations     ||
+|  |                                      ||
+|  |  [======= Upgrade Now =======]      ||
+|  |                                      ||
+|  |  7-day free trial. Cancel anytime.   ||
+|  +--------------------------------------+|
+|                                           |
+|  "One private lesson costs $80-150.       |
+|   Musashi is available after every        |
+|   session for $10/month."                |
+|                                           |
+|  [Maybe later]                            |
+|                                           |
++------------------------------------------+
 ```
 
 ---
 
-## Navigation Flow
+## Design Tokens
 
-Map out how users move between screens:
+### Colors (dark mode default):
+- Background: Slate 950 (`#020617`)
+- Card/Surface: Slate 900 (`#0f172a`)
+- Primary (CTA, user bubbles): Blue 600 (`#2563eb`)
+- Musashi bubble: Slate 800 (`#1e293b`)
+- Text primary: Slate 50 (`#f8fafc`)
+- Text muted: Slate 400 (`#94a3b8`)
+- Success/positive: Emerald 500 (`#10b981`)
+- Warning/concern: Amber 500 (`#f59e0b`)
+- Danger/alert: Red 500 (`#ef4444`)
 
-```
-Landing Page
-  → [Sign Up] → Onboarding (Chat)
-  → [Complete] → Chat Screen (main app)
+### Typography:
+- Headings: Inter (or system font stack), semibold
+- Body: Inter, regular, 14-16px
+- Chat messages: 15px for readability on mobile
+- Mono (stats/numbers): JetBrains Mono or system monospace
 
-Chat Screen (Tab 1)
-  ↔ Dashboard: Game (Tab 2)
-  ↔ Dashboard: Progress (Tab 3)
-  ↔ Profile (Tab 4)
-
-All screens:
-  → [Settings icon] → Profile/Settings
-  → [Bottom nav] → Switch tabs
-```
-
-**Key Decisions**:
-1. **Back Button Behavior**: If user is in Profile and taps back, where do they go? (Last tab, or always Chat?)
-2. **Deep Links**: If notification says "Log your session," does it open Chat with logging flow pre-loaded?
-3. **Empty States**: If Dashboard has no data, what does it show? ("Log your first session to see stats!")
-
-**Your Navigation Map**:
-```
-[Draw or describe the flow]
-```
+### Spacing:
+- Chat message gap: 12px
+- Section padding: 16px horizontal, 24px vertical
+- Card border radius: 12px
+- Button border radius: 8px
 
 ---
 
-## Mobile vs Desktop Considerations
+## Completion Checklist
 
-This is a mobile-first PWA, but will people use it on desktop?
-
-**Your Decision**:
-- [ ] **Mobile-only optimization** (Desktop is just a wider version, same layout)
-- [ ] **Responsive design** (Desktop gets sidebar nav instead of bottom tabs)
-
-**If Responsive**, sketch desktop layout:
-```
-Example:
-Desktop (1200px+):
-┌──────────┬────────────────────┐
-│ Sidebar  │  Main Content      │
-│ [Logo]   │  [Chat messages]   │
-│ Chat     │                    │
-│ Game     │  [Submission stats]│
-│ Progress │                    │
-│ Profile  │                    │
-└──────────┴────────────────────┘
-```
-
-**Your Preference**: [Mobile-only or responsive?]
-
----
-
-## Design Aesthetic & Vibe
-
-Even without picking colors, describe the feel you want:
-
-**Style**:
-- [ ] Calm and minimalist (lots of white space, soft colors)
-- [ ] Intense and competitive (bold colors, sharp edges, data-dense)
-- [ ] Zen and philosophical (earthy tones, smooth animations)
-
-**Mood Board** (optional):
-```
-Apps that inspire you:
-- Example: "Strava (fitness tracking, clean charts)"
-- Example: "Headspace (calm, friendly, not overwhelming)"
-- Example: "Duolingo (gamified, encouraging, fun)"
-```
-
-**Your Vibe**:
-```
-[Describe in 2-3 sentences]
-
-Example:
-"I want it to feel like a wise coach, not a robot. Calm but focused. Dark mode 
-by default (easier on eyes after training). Charts should be clean and easy to 
-read at a glance—no clutter."
-```
-
----
-
-## Color Palette (Optional, but helpful)
-
-If you have preferences, note them. Otherwise, I'll pick a sensible default.
-
-**Primary Color** (main actions, accents):
-```
-Example: Blue (#3B82F6) or Purple (#8B5CF6) or Green (#10B981)
-Your preference: [Color or "designer's choice"]
-```
-
-**Background**:
-```
-Dark mode: Dark gray (#1F2937) or True black (#000000)?
-Light mode: White (#FFFFFF) or Cream (#FAFAFA)?
-Your preference: [Specify or "designer's choice"]
-```
-
-**Chart Colors**:
-```
-Success (submissions hit): Green
-Warning (areas to improve): Yellow/Orange
-Error (submissions received): Red
-Your preference: [Adjust or "standard traffic light colors"]
-```
-
----
-
-## Animations & Interactions
-
-Do you want subtle animations, or keep it snappy/instant?
-
-**Examples**:
-- [ ] **Smooth scrolling** (60fps, feels native)
-- [ ] **Fade-in for new messages** (Musashi's responses appear gently)
-- [ ] **Chart animations** (bars grow, lines draw, etc.)
-- [ ] **Haptic feedback** (on mobile, vibrate on button tap) [Phase 1.5]
-
-**Your Preference**:
-```
-[Choose level: None, Subtle, or Playful]
-
-Example: "Subtle animations—fade-ins and smooth scrolling. No crazy confetti or 
-fireworks (save that for hitting big milestones like 100 sessions)."
-```
-
----
-
-## Empty States
-
-What do users see when they have no data yet?
-
-**Chat (No Messages)**:
-```
-Example:
-[Illustration of Musashi avatar]
-"Hey! I'm Musashi, your BJJ coach. Let's log your first training session!"
-[Log Session button]
-```
-
-**Dashboard (No Sessions)**:
-```
-Example:
-[Illustration of empty chart]
-"Your stats will appear here after your first training session."
-[Log Session button]
-```
-
-**Your Empty States**:
-```
-[Describe or sketch]
-```
-
----
-
-## Error States
-
-What happens when something goes wrong?
-
-**AI Not Responding** (API timeout):
-```
-Example:
-"Hmm, I'm having trouble thinking right now. Try again in a moment?"
-[Retry button]
-```
-
-**Payment Failed**:
-```
-Example:
-"Your payment didn't go through. Update your card to keep access."
-[Update Payment button]
-```
-
-**Your Error Messages**:
-```
-[Define tone: Friendly, Technical, or Apologetic?]
-```
-
----
-
-## ✅ Completion Checklist
-
-- [ ] All 6 core screens sketched or described
-- [ ] Navigation flow mapped out
-- [ ] Mobile vs desktop decision made
-- [ ] Design vibe/aesthetic described
-- [ ] Color preferences noted (or deferred to designer)
-- [ ] Animation preferences specified
-- [ ] Empty states defined
-- [ ] Error states defined
-
----
-
-**Once complete, you've finished all homework! 🎉**
-
-Next step: Share your completed templates, and I'll integrate them into the codebase.
+- [x] All 7 screens described with ASCII wireframes
+- [x] Navigation structure defined (bottom tab bar, 4 tabs)
+- [x] Chat message types specified (user, Musashi, quick-select, video card, weekly summary)
+- [x] Dashboard sections specified (Game tab + Progress tab)
+- [x] Profile/Settings layout defined
+- [x] Onboarding screen behavior specified
+- [x] Landing page layout summarized (references PRD Section 12)
+- [x] Paywall/upgrade screen defined
+- [x] Design tokens specified (colors, typography, spacing)
+- [x] Empty states described
+- [x] Offline behavior noted

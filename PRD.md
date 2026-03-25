@@ -260,7 +260,21 @@ Every Sunday at 8:00 PM (user's timezone):
 - Include inline chart (submission trend, for example)
 - Add actionable CTAs: "Start this drill tomorrow" (links to video)
 
-#### R4.3: User Controls
+#### R4.3: Scheduling & Hosting (Vercel Cron)
+- Weekly summaries are triggered by a **Vercel Cron Job** defined in `vercel.json`
+- Cron schedule: `0 20 * * 0` (every Sunday at 8:00 PM UTC — adjust for user timezone in logic)
+- Cron hits a protected SvelteKit API route: `POST /api/summaries/generate`
+- The route is authenticated via a `CRON_SECRET` env var (Vercel sets this automatically; the route rejects requests without a matching `Authorization: Bearer <CRON_SECRET>` header)
+- **Flow**:
+  1. Route queries all active users who have logged at least 1 session in the past 7 days
+  2. For each user, aggregates weekly data via Drizzle (sessions, techniques, mood, energy)
+  3. Sends aggregated context to LLM (Claude Haiku 4.5) with summary prompt
+  4. Writes the AI-generated summary as a new message in the user's active conversation (message type: `weekly_summary`)
+  5. Logs success/failure per user to Sentry
+- **Timeout**: Vercel cron functions have a 60s limit on Hobby, 300s on Pro. Batch users if needed (process 50 users per invocation, chain if more)
+- **Idempotency**: The route MUST check if a summary was already generated for this user + week to avoid duplicates on retry
+
+#### R4.4: User Controls
 - User can disable weekly summaries (Settings > Notifications)
 - User can request summary on-demand: "Show me this week's summary"
 
@@ -363,11 +377,37 @@ The system MUST only recommend content from:
   - `customer.subscription.deleted` → downgrade to free tier
 - User MUST be able to manage subscription (cancel, update card) via Stripe Customer Portal
 
-#### R7.4: Access Control
-- Middleware checks `user.subscriptionStatus` before allowing:
-  - AI chat (free trial: 20 messages/week; paid: 100 messages/week)
-  - New session logging (free tier: blocked; trial/paid: allowed)
-- Clear messaging when limits hit: "Upgrade to continue logging"
+#### R7.4: Access Control & Rate Limiting
+
+**Subscription Gating**:
+- SvelteKit server hook (`hooks.server.ts`) checks `user.subscriptionStatus` on every protected request
+- New session logging: free tier (post-trial) → blocked; trial/paid → allowed
+- Dashboard viewing: all tiers → allowed (users can always see their historical data)
+
+**AI Message Rate Limiting**:
+- **Tracking**: `message_counts` table in Supabase with columns: `user_id`, `week_start` (date), `count` (integer)
+- **Increment**: On every user message to the chat API, increment `count` via Drizzle. Use `week_start` = Monday 00:00 UTC of the current week
+- **Check**: Before processing a chat message, query the user's current week count. If at or above limit, reject before calling the LLM (saves AI cost)
+- **Limits**:
+  - Free trial: 20 messages/week
+  - Paid: 100 messages/week
+- **Reset**: No cron needed — the `week_start` column naturally rotates. A new week means a new row (or upsert with new `week_start` value)
+- **Enforcement point**: SvelteKit server hook runs before the `/api/chat` route handler. This ensures rate limiting is centralized, not scattered across routes
+
+**User-Facing Messaging When Limit Hit**:
+- Musashi responds in-character (not a system error):
+  > "We've had a great conversation this week — you've used all your messages. Upgrade to keep going, or I'll be back next week."
+- Include an inline "Upgrade" button that links to the Stripe checkout flow
+- The message MUST be stored in the conversation so the user sees it if they return later
+- Logging quick-select buttons are hidden when limit is reached (prevent confusion where user taps but nothing happens)
+
+**Abuse Prevention**:
+- If a user creates multiple accounts (same email domain pattern or device fingerprint), flag via Sentry alert for manual review
+- Stripe checkout requires a valid payment method — prevents infinite trial abuse after the free week
+
+**Scaling Path** (not MVP):
+- At 1,000+ concurrent users, add Redis (or Supabase Realtime cache) as a read-through cache for rate limit checks to reduce DB queries
+- At that scale, consider per-minute rate limiting (not just weekly) to prevent burst abuse
 
 ---
 
@@ -403,6 +443,46 @@ The system MUST only recommend content from:
 - **Desktop**: Chrome, Firefox, Safari, Edge (last 2 versions)
 - **Mobile**: iOS Safari, Chrome Android (last 2 versions)
 - **PWA**: Must be installable on iOS and Android
+
+### 5.6 Offline Resilience & Connectivity UX
+
+#### Design Principle
+Training logs are captured in gyms — sweaty hands, spotty wifi, locker rooms with no signal. The app MUST treat offline as a normal state, not an error. Users should feel confident capturing their thoughts immediately after training, knowing nothing will be lost.
+
+#### Connectivity Detection & User Messaging
+- The app MUST detect connectivity state in real time (online/offline/slow)
+- **When offline or on weak signal**, display a persistent but non-alarming banner:
+  > "You're offline — no worries. Log your session now and it'll sync when you're back in range."
+- The banner MUST appear BEFORE the user tries to interact, not after a failed request
+- **When connectivity returns**, the banner transitions to:
+  > "Back online — syncing your session..." → "All caught up ✓" (auto-dismiss after 3 seconds)
+- The chat input and logging quick-select buttons MUST remain fully functional while offline
+
+#### Offline Data Capture (IndexedDB Queue)
+- All training logs (session data, events, mood, notes) MUST be stored locally in IndexedDB immediately on submit
+- Chat messages the user sends while offline MUST be queued locally with timestamps
+- The app MUST show the user's queued messages in the chat thread (styled normally, with a subtle "pending sync" indicator like a small clock icon)
+- Dashboard data from the last successful load MUST be cached and viewable offline
+- Previous conversation history MUST be cached and readable offline
+
+#### Sync Behavior
+- When connectivity returns, the app MUST flush the IndexedDB queue to Supabase in chronological order
+- Sync MUST be automatic — no user action required
+- If a queued log syncs successfully, the pending indicator on that message resolves silently
+- If sync fails (e.g., auth expired), queue is preserved and retried on next connectivity change
+- Queued logs MUST never be lost — IndexedDB data persists across app restarts and device reboots
+
+#### What Requires Connectivity
+These features gracefully degrade when offline:
+- **AI chat responses**: Musashi needs the LLM — queued user messages get AI responses once back online. Show: "Musashi will respond when you're back online."
+- **Real-time dashboard updates**: Stale cached data is shown with a "Last updated: [timestamp]" label
+- **Payment flows**: Stripe requires connectivity — disable payment buttons with: "Payments require an internet connection"
+- **Weekly summaries**: Generated server-side, delivered on next sync
+
+#### Service Worker & PWA Requirements
+- Service worker MUST cache the app shell, UI assets, and last-loaded data for instant offline startup
+- PWA install prompt MUST be shown after 2nd visit (not immediately — avoid annoying new users)
+- App MUST launch from home screen in standalone mode (no browser chrome)
 
 ---
 
@@ -442,22 +522,22 @@ The system MUST only recommend content from:
 
 ## 7. Technical Architecture
 
-### 7.1 Tech Stack Summary
+### 7.1 Tech Stack Summary — Revised March 2026
 See [DECISIONS.md](./DECISIONS.md) for full rationale.
 
 | Layer | Technology |
 |-------|-----------|
-| Frontend | Next.js 14 (App Router), React, TypeScript |
-| Styling | Tailwind CSS, shadcn/ui, Radix UI |
-| Backend | Next.js API Routes, TypeScript |
-| Database | PostgreSQL 15+ (with pgvector for Phase 1.5) |
-| ORM | Prisma |
+| Frontend | SvelteKit, Svelte 5 (runes), TypeScript |
+| Styling | Tailwind CSS, shadcn-svelte (bits-ui) |
+| Backend | SvelteKit server routes, TypeScript |
+| Platform | Supabase (PostgreSQL + Auth + pgvector + Edge Functions) |
+| ORM | Drizzle |
 | Validation | Zod |
-| Auth | Clerk |
+| Auth | Supabase Auth |
 | Payments | Stripe |
-| AI | OpenAI (GPT-4o-mini, Whisper) |
-| Charts | Recharts |
-| Hosting | VPS + Coolify (MVP), Vercel (at scale) |
+| AI | Vercel AI SDK + Claude Haiku 4.5 / GPT-4.1-mini (chat), Groq Whisper (voice, Phase 1.5) |
+| Charts | Layer Cake |
+| Hosting | Vercel (SvelteKit adapter) |
 | Monitoring | PostHog (analytics), Sentry (errors) |
 
 ### 7.2 Data Model Overview
@@ -469,8 +549,10 @@ See [DECISIONS.md](./DECISIONS.md) for full rationale.
 - `techniques`: Canonical list of BJJ techniques (armbar, triangle, etc.)
 - `positions`: Canonical list of BJJ positions (guard, mount, etc.)
 - `goals`: User goals (short/medium/long term)
+- `messages`: Chat message history (user + AI messages, per conversation)
+- `conversations`: Chat conversation threads (groups messages by context)
 - `content_links`: Curated video links (technique_id → YouTube URL)
-- `memories` (Phase 1.5): Vector embeddings for semantic search (pgvector)
+- `memories` (Phase 1.5): Vector embeddings for semantic search (Supabase pgvector)
 
 **Relationships**:
 - `sessions` → `users` (many-to-one)
@@ -478,8 +560,10 @@ See [DECISIONS.md](./DECISIONS.md) for full rationale.
 - `events` → `techniques` (many-to-one)
 - `events` → `positions` (many-to-one)
 - `content_links` → `techniques` (many-to-one)
+- `messages` → `conversations` (many-to-one)
+- `conversations` → `users` (many-to-one)
 
-See `/prisma/schema.prisma` for full schema.
+See `/drizzle/schema.ts` for full schema.
 
 ### 7.3 AI Agent Architecture
 
@@ -518,9 +602,38 @@ Calm, specific, analytical, encouraging. Adapt detail level to user's belt rank.
 
 **Phase 1.5 Upgrade (RAG)**:
 - Generate embeddings for session summaries (OpenAI `text-embedding-3-small`)
-- Store in `memories` table (pgvector)
+- Store in `memories` table (Supabase pgvector)
 - Semantic search: retrieve top 3 relevant memories
 - Inject into prompt alongside recent sessions
+
+### 7.4 LLM Error Handling & Resilience
+
+#### Provider Fallback Chain
+The system MUST implement automatic provider fallback via Vercel AI SDK:
+1. **Primary**: Claude Haiku 4.5
+2. **Fallback**: GPT-4.1-mini
+3. **Last resort**: Graceful in-character error message
+
+If the primary provider fails (timeout, 5xx, rate limit), the SDK switches to the fallback provider transparently. The user never sees a provider name or technical error.
+
+#### Retry Strategy
+- **Max retries**: 3 attempts per provider before falling through to next
+- **Backoff**: Exponential — 1s, 2s, 4s between retries
+- **Timeout**: 10-second hard limit per request. Streaming MUST begin within 2 seconds; if no tokens arrive in 10s, treat as failure
+- **Idempotency**: Retries MUST NOT create duplicate messages in the database
+
+#### User-Facing Error Behavior
+- On transient failure (retries exhausted on all providers), Musashi responds in-character:
+  > "I'm having trouble thinking clearly right now. Try sending that again in a moment."
+- On persistent failure (3+ consecutive errors for same user), display a non-blocking banner:
+  > "Musashi is temporarily unavailable. Your message has been saved and he'll respond when back online."
+- NEVER expose stack traces, provider names, HTTP status codes, or token counts to the user
+
+#### Cost Monitoring & Provider Rate Limits
+- Track per-user token usage in the database (input tokens + output tokens per message)
+- Alert via Sentry if any single user exceeds $1.00/day in AI cost (abuse detection)
+- Alert if aggregate daily cost exceeds 2x the 7-day rolling average
+- If approaching provider rate limits, queue requests with a "Musashi is typing..." indicator rather than failing
 
 ---
 
@@ -631,22 +744,218 @@ If after 30 days:
 
 ---
 
-## 12. Appendices
+## 12. Landing Page Spec
 
-### 12.1 Glossary of BJJ Terms
+### 12.1 Purpose & Goals
+- **Primary goal**: Convert visitor → free trial signup
+- **Secondary goal**: Communicate what MatMentor is in under 10 seconds
+- **Target conversion rate**: >5% visitor → signup (industry avg for niche SaaS: 3-5%)
+- **Design**: Mobile-first (most BJJ practitioners will arrive via phone from Reddit/Instagram/DM)
+
+### 12.2 Page Structure
+
+#### Section 1: Hero (Above the Fold)
+The hero must answer three questions in under 5 seconds: *What is this? Who is it for? What do I do next?*
+
+**Headline** (outcome-first, not feature-first):
+> "Train smarter. Know your game. Stop guessing."
+
+**Subheadline** (one sentence — who it's for + what it does):
+> "MatMentor is an AI coach that tracks your BJJ, spots your patterns, and tells you exactly what to work on next."
+
+**CTA Button**:
+> "Start Free Trial" (high-contrast, full-width on mobile)
+
+**Supporting element**: A single screenshot or short looping video (~5s) showing the chat interface — Musashi asking "Did you train today?" with quick-select buttons visible. This immediately communicates "it's a chat app, not a spreadsheet."
+
+**No navigation links above the fold.** Keep focus on the CTA. Minimal nav (logo + "Log In" link only) in a slim top bar.
+
+---
+
+#### Section 2: Problem (Emotional Hook)
+Speak directly to the frustration. Use second person. Keep it to 3 short bullets — the reader should feel *seen*.
+
+**Section heading**:
+> "Sound familiar?"
+
+**Three pain points** (each 1 sentence max):
+> - "You train 3x a week but can't tell if you're actually improving."
+> - "You get tapped by the same stuff and don't know how to fix it."
+> - "You have questions after class but don't want to look clueless asking them."
+
+**Transition line**:
+> "You don't need another training journal. You need a coach who's always available."
+
+---
+
+#### Section 3: Solution (Product Intro)
+Introduce Musashi. Make it personal — this isn't a feature list, it's meeting someone.
+
+**Section heading**:
+> "Meet Musashi — your AI BJJ coach"
+
+**Short description** (2-3 sentences):
+> "Musashi blends the precision of Danaher, the philosophy of Rickson, and the systematic approach of Saulo. After every session, he'll ask what happened, spot patterns in your game, and tell you exactly what to drill next — with video links from world-class instructors."
+
+**Visual**: Chat conversation mockup showing a realistic post-training exchange. Musashi gives feedback, links a Danaher video, and asks about energy level. Quick-select buttons visible.
+
+---
+
+#### Section 4: How It Works (3-Step Flow)
+Reduce perceived effort. Show that logging is fast and the payoff is immediate.
+
+**Section heading**:
+> "Log a session in 60 seconds. Get smarter every week."
+
+**Step 1**: "Train at your gym"
+> Icon: gi/mat illustration. Brief: "Do your thing on the mats."
+
+**Step 2**: "Chat with Musashi"
+> Icon: chat bubble. Brief: "Tap a few buttons — what you drilled, who you rolled with, how you felt. Done before you're out of the parking lot."
+
+**Step 3**: "See your game evolve"
+> Icon: chart/tree. Brief: "Watch your strengths, weaknesses, and streaks emerge. Get weekly AI summaries and targeted drill recommendations."
+
+---
+
+#### Section 5: Feature Highlights (3-4 Cards)
+Not an exhaustive list. Pick the 3-4 things that make someone think "I want that."
+
+**Card 1: "Chat, don't type"**
+> "Quick-select buttons mean logging takes 60 seconds — not 10 minutes of journaling."
+
+**Card 2: "Know your A-game (and your holes)"**
+> "See which submissions you hit most, which positions eat you alive, and what to focus on."
+
+**Card 3: "Weekly game plan"**
+> "Every Sunday, Musashi reviews your week and gives you a specific drill to own before next class."
+
+**Card 4: "Works offline"**
+> "Log right after rolling — even in the locker room with no signal. It syncs when you're ready."
+
+---
+
+#### Section 6: Social Proof
+Critical for trust. At launch, use beta tester quotes. Replace with real testimonials as they come in.
+
+**Section heading**:
+> "What practitioners are saying"
+
+**Format**: 2-3 short quotes with name, belt rank, and gym (with permission). Example placeholder:
+> "I've been training 2 years and this is the first time I can actually see what I'm good at."
+> — *Alex M., Blue Belt, 10th Planet San Diego*
+
+**If no testimonials at launch**: Replace with a "Join 50+ beta testers" counter or a Reddit/community endorsement.
+
+---
+
+#### Section 7: Pricing (Simple, One Tier)
+Don't overcomplicate. One price, one CTA. Address the objection ("is it worth $10?") before they think it.
+
+**Section heading**:
+> "Less than a single private lesson. Every month."
+
+**Pricing card**:
+> **$9.99/month**
+> - AI coaching after every session
+> - Submission & position analytics
+> - Weekly personalized game plans
+> - Curated video recommendations
+> - Works offline
+>
+> **Start with 7 days free. Cancel anytime.**
+>
+> [Start Free Trial]
+
+**Objection buster** (small text below pricing):
+> "One private lesson costs $80-150. Musashi is available after every single session for $10/month."
+
+---
+
+#### Section 8: FAQ (3-5 Questions)
+Handle remaining objections. Keep answers to 1-2 sentences.
+
+Suggested questions:
+1. **"Do I need to type a lot?"** → "Nope. Most logging is tap-to-select. You can type if you want to, but it's designed for tired hands after rolling."
+2. **"Will it work for my style? (gi/no-gi/competition/hobbyist)"** → "Yes. Musashi adapts to your belt level, goals, and training style during onboarding."
+3. **"Is my training data private?"** → "Completely. Your data is encrypted, never shared, and you can export or delete it anytime."
+4. **"What if I train somewhere with bad wifi?"** → "MatMentor works offline. Log your session in the locker room and it syncs automatically when you have signal."
+5. **"Can I cancel anytime?"** → "Yes. No contracts, no cancellation fees. You keep access through the end of your billing period."
+
+---
+
+#### Section 9: Install on Your Phone (PWA Prompt)
+Bridge the gap between web app and native app expectation. Make installation feel like downloading a real app, and set the expectation that a native app is coming.
+
+**Section heading**:
+> "Add it to your home screen — use it like an app"
+
+**Subtext**:
+> "MatMentor works as a full-screen app straight from your phone. No app store needed — install it in 10 seconds."
+
+**Step-by-step** (detect iOS vs Android, show the relevant instructions):
+> **iPhone**: Tap the Share button → "Add to Home Screen" → Done
+> **Android**: Tap the menu (⋮) → "Install app" or "Add to Home Screen" → Done
+
+**Future promise** (small text below):
+> "A dedicated mobile app is on the way. Install now and you'll be first to know when it drops."
+
+**Visual**: Short GIF or 3-step illustration showing the install flow on a phone.
+
+---
+
+#### Section 10: Final CTA (Closing)
+Repeat the primary CTA. Add urgency or identity reinforcement.
+
+**Heading**:
+> "Your next session deserves a debrief."
+
+**Subtext**:
+> "Start your free trial — log your first session tonight."
+
+**CTA Button**: "Start Free Trial"
+
+---
+
+#### Footer
+- Links: Privacy Policy, Terms of Service, Contact
+- "Built for the BJJ community" tagline
+- Social links (Instagram, Reddit, X) if applicable
+
+### 12.3 Copywriting Principles Applied
+- **Outcome over feature**: Headlines describe what the user gets, not what the product does
+- **Second person throughout**: "You" and "your" — never "our users" or "one can"
+- **Specificity**: "60 seconds" not "fast"; "$9.99/month" not "affordable"; "Danaher video" not "instructional content"
+- **One CTA action**: Every button says "Start Free Trial" — no competing actions
+- **Objection handling inline**: Price justified before they do the math; privacy addressed before they worry; offline mentioned before they doubt
+- **Progressive disclosure**: Problem → solution → proof → price → action. Each section earns the right to the next scroll
+- **Mobile-first copy length**: Every block is scannable in 3-5 seconds on a phone screen. No paragraphs longer than 2 sentences outside the FAQ
+
+### 12.4 Assets Needed for Launch
+- [ ] 2-3 chat interface screenshots (realistic Musashi conversation)
+- [ ] 1 dashboard screenshot (submission stats, training calendar)
+- [ ] Musashi avatar/illustration (used in chat + landing page)
+- [ ] OG image for social sharing (1200x630, headline + screenshot + CTA)
+- [ ] Favicon + PWA icons
+
+---
+
+## 13. Appendices
+
+### 13.1 Glossary of BJJ Terms
 - **Guard**: Position where one person is on their back, using legs to control opponent
 - **Mount**: Top position where attacker sits on opponent's chest
 - **Submission**: Technique that forces opponent to "tap out" (yield)
 - **RPE**: Rate of Perceived Exertion (1-10 scale, how hard did you work?)
 - **Gi**: Traditional BJJ uniform (vs No-Gi: without uniform)
 
-### 12.2 References
+### 13.2 References
 - Saulo Ribeiro, "Jiu-Jitsu University" (progression philosophy)
 - John Danaher, "Enter the System" (systematic approach)
 - Rickson Gracie interviews (mental game, breathing, philosophy)
 - IBJJF (International Brazilian Jiu-Jitsu Federation) rules and belt requirements
 
-### 12.3 Related Documents
+### 13.3 Related Documents
 - [DECISIONS.md](./DECISIONS.md) - Architectural decisions log
 - [ROADMAP.md](./ROADMAP.md) - Detailed task breakdown and timeline
 - `/docs/mvp-homework/` - User templates for onboarding script, skill tree, etc.

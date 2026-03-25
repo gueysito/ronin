@@ -17,10 +17,10 @@ Last Updated: October 13, 2025
 | **Requirements** | `PRD.md` |
 | **Setup instructions** | `README.md` |
 | **User homework** | `docs/mvp-homework/` |
-| **Database schema** | `prisma/schema.prisma` (when created) |
-| **API routes** | `app/api/` (when created) |
-| **React components** | `components/` (when created) |
-| **AI logic** | `lib/ai/` (when created) |
+| **Database schema** | `drizzle/schema.ts` (when created) |
+| **API routes** | `src/routes/api/` (when created) |
+| **Svelte components** | `src/lib/components/` (when created) |
+| **AI logic** | `src/lib/server/ai/` (when created) |
 
 ---
 
@@ -63,32 +63,32 @@ Before we can start coding, complete these 6 templates:
 
 ### Step 1: Initialize Project
 ```bash
-# Create Next.js app with TypeScript
-npx create-next-app@latest . --typescript --tailwind --app --src-dir=false
+# Create SvelteKit app with TypeScript
+npx sv create . --template minimal --types ts
 
 # Install core dependencies
-npm install @prisma/client prisma
-npm install @clerk/nextjs
-npm install stripe
-npm install zod
-npm install recharts
-npm install openai
+npm install drizzle-orm postgres
+npm install -D drizzle-kit
+npm install @supabase/supabase-js @supabase/ssr
+npm install stripe zod
+npm install ai @ai-sdk/anthropic @ai-sdk/openai
+npm install layercake
 
-# Install shadcn/ui
-npx shadcn-ui@latest init
+# Install shadcn-svelte
+npx shadcn-svelte@latest init
+
+# Install Tailwind CSS (if not included by sv create)
+npx sv add tailwindcss
 ```
 
 ### Step 2: Set Up Database
 ```bash
-# Initialize Prisma
-npx prisma init
-
-# Edit prisma/schema.prisma (based on homework taxonomy)
-# Then create initial migration
-npx prisma migrate dev --name init
+# Create drizzle/schema.ts (based on homework taxonomy)
+# Then push schema to Supabase
+npx drizzle-kit push
 
 # Seed database with techniques, positions, video links
-npx prisma db seed
+npx tsx drizzle/seed.ts
 ```
 
 ### Step 3: Configure Environment Variables
@@ -97,10 +97,11 @@ npx prisma db seed
 cp .env.example .env
 
 # Edit .env with:
-# - DATABASE_URL (PostgreSQL connection string)
-# - NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY
-# - CLERK_SECRET_KEY
-# - OPENAI_API_KEY
+# - PUBLIC_SUPABASE_URL
+# - PUBLIC_SUPABASE_ANON_KEY
+# - SUPABASE_SERVICE_ROLE_KEY
+# - DATABASE_URL (Supabase Postgres connection string)
+# - ANTHROPIC_API_KEY (or OPENAI_API_KEY)
 # - STRIPE_SECRET_KEY
 # - STRIPE_WEBHOOK_SECRET
 ```
@@ -108,7 +109,7 @@ cp .env.example .env
 ### Step 4: Run Development Server
 ```bash
 npm run dev
-# Open http://localhost:3000
+# Open http://localhost:5173
 ```
 
 ---
@@ -117,100 +118,81 @@ npm run dev
 
 Once homework is complete, we'll generate a schema like this:
 
-```prisma
-// prisma/schema.prisma
+```typescript
+// drizzle/schema.ts
+import { pgTable, text, integer, real, timestamp, pgEnum } from 'drizzle-orm/pg-core';
+import { relations } from 'drizzle-orm';
 
-model User {
-  id              String    @id @default(cuid())
-  clerkId         String    @unique
-  email           String    @unique
-  belt            Belt
-  experienceYears Float
-  trainingGoal    Int       // Days per week
-  createdAt       DateTime  @default(now())
-  updatedAt       DateTime  @updatedAt
-  
-  sessions        Session[]
-  goals           Goal[]
-}
+export const beltEnum = pgEnum('belt', ['white', 'blue', 'purple', 'brown', 'black']);
+export const domainEnum = pgEnum('domain', ['guard', 'passing', 'top_control', 'escapes', 'takedowns']);
+export const eventTypeEnum = pgEnum('event_type', ['attempt', 'success', 'against']);
 
-model Session {
-  id          String   @id @default(cuid())
-  userId      String
-  date        DateTime @default(now())
-  duration    Int      // Minutes
-  intensity   Int      // RPE 1-10
-  energy      Int      // 1-5
-  mood        String?
-  notes       String?
-  
-  user        User     @relation(fields: [userId], references: [id])
-  events      Event[]
-}
+export const users = pgTable('users', {
+  id: text('id').primaryKey(), // Supabase Auth UID
+  email: text('email').notNull().unique(),
+  belt: beltEnum('belt').notNull(),
+  experienceYears: real('experience_years').notNull(),
+  trainingGoal: integer('training_goal').notNull(), // Days per week
+  createdAt: timestamp('created_at').defaultNow().notNull(),
+  updatedAt: timestamp('updated_at').defaultNow().notNull(),
+});
 
-model Event {
-  id          String   @id @default(cuid())
-  sessionId   String
-  type        EventType // ATTEMPT, SUCCESS, AGAINST
-  techniqueId String
-  positionId  String?
-  
-  session     Session    @relation(fields: [sessionId], references: [id])
-  technique   Technique  @relation(fields: [techniqueId], references: [id])
-  position    Position?  @relation(fields: [positionId], references: [id])
-}
+export const sessions = pgTable('sessions', {
+  id: text('id').primaryKey().$defaultFn(() => crypto.randomUUID()),
+  userId: text('user_id').notNull().references(() => users.id),
+  date: timestamp('date').defaultNow().notNull(),
+  duration: integer('duration').notNull(), // Minutes
+  intensity: integer('intensity').notNull(), // RPE 1-10
+  energy: integer('energy').notNull(), // 1-5
+  mood: text('mood'),
+  notes: text('notes'),
+});
 
-model Technique {
-  id      String @id @default(cuid())
-  name    String @unique
-  domain  Domain
-  aliases String[] // ["RNC", "Mata Leão"]
-  
-  events       Event[]
-  contentLinks ContentLink[]
-}
+export const events = pgTable('events', {
+  id: text('id').primaryKey().$defaultFn(() => crypto.randomUUID()),
+  sessionId: text('session_id').notNull().references(() => sessions.id),
+  type: eventTypeEnum('type').notNull(),
+  techniqueId: text('technique_id').notNull().references(() => techniques.id),
+  positionId: text('position_id').references(() => positions.id),
+});
 
-model Position {
-  id     String @id @default(cuid())
-  name   String @unique
-  domain Domain
-  
-  events Event[]
-}
+export const techniques = pgTable('techniques', {
+  id: text('id').primaryKey().$defaultFn(() => crypto.randomUUID()),
+  name: text('name').notNull().unique(),
+  domain: domainEnum('domain').notNull(),
+  aliases: text('aliases').array(), // ["RNC", "Mata Leão"]
+});
 
-model ContentLink {
-  id          String @id @default(cuid())
-  techniqueId String
-  title       String
-  url         String
-  instructor  String
-  duration    Int?
-  beltLevel   Belt?
-  
-  technique Technique @relation(fields: [techniqueId], references: [id])
-}
+export const positions = pgTable('positions', {
+  id: text('id').primaryKey().$defaultFn(() => crypto.randomUUID()),
+  name: text('name').notNull().unique(),
+  domain: domainEnum('domain').notNull(),
+});
 
-enum Belt {
-  WHITE
-  BLUE
-  PURPLE
-  BROWN
-  BLACK
-}
+export const conversations = pgTable('conversations', {
+  id: text('id').primaryKey().$defaultFn(() => crypto.randomUUID()),
+  userId: text('user_id').notNull().references(() => users.id),
+  title: text('title'),
+  createdAt: timestamp('created_at').defaultNow().notNull(),
+});
 
-enum Domain {
-  GUARD
-  PASSING
-  TOP_CONTROL
-  ESCAPES
-  TAKEDOWNS
-}
+export const messages = pgTable('messages', {
+  id: text('id').primaryKey().$defaultFn(() => crypto.randomUUID()),
+  conversationId: text('conversation_id').notNull().references(() => conversations.id),
+  role: text('role').notNull(), // 'user' | 'assistant'
+  content: text('content').notNull(),
+  createdAt: timestamp('created_at').defaultNow().notNull(),
+});
 
-enum EventType {
-  ATTEMPT
-  SUCCESS
-  AGAINST
-}
+export const contentLinks = pgTable('content_links', {
+  id: text('id').primaryKey().$defaultFn(() => crypto.randomUUID()),
+  techniqueId: text('technique_id').notNull().references(() => techniques.id),
+  title: text('title').notNull(),
+  url: text('url').notNull(),
+  instructor: text('instructor').notNull(),
+  duration: integer('duration'),
+  beltLevel: beltEnum('belt_level'),
+});
 ```
 
 ---
@@ -219,9 +201,10 @@ enum EventType {
 
 ### System Prompt Structure
 ```typescript
-// lib/ai/prompt.ts
+// src/lib/server/ai/prompt.ts
 
-export const systemPrompt = `
+export function buildSystemPrompt(user: User, lastSessions: Session[]) {
+  return `
 You are Musashi, a wise BJJ coach.
 
 # Identity
@@ -242,39 +225,54 @@ ${lastSessions.map(s => `- ${s.date}: ${s.techniques.join(', ')}`).join('\n')}
 2. Reference user's history
 3. Only recommend videos from approved whitelist
 4. Never give medical advice
-...
 `;
+}
 ```
 
-### Chat API Route
+### Chat API Route (SvelteKit + Vercel AI SDK)
 ```typescript
-// app/api/chat/route.ts
+// src/routes/api/chat/+server.ts
+import { streamText } from 'ai';
+import { anthropic } from '@ai-sdk/anthropic';
+import { buildSystemPrompt } from '$lib/server/ai/prompt';
 
-export async function POST(req: Request) {
-  const { message, userId } = await req.json();
-  
-  // 1. Validate with Zod
-  const schema = z.object({
-    message: z.string().min(1).max(500),
-    userId: z.string()
-  });
-  
-  // 2. Get user context (last 3 sessions)
+export async function POST({ request, locals }) {
+  const { messages } = await request.json();
+  const userId = locals.user.id;
+
+  // Get user context (last 3 sessions)
   const context = await getContext(userId);
-  
-  // 3. Call OpenAI
-  const response = await openai.chat.completions.create({
-    model: 'gpt-4o-mini',
-    messages: [
-      { role: 'system', content: systemPrompt(context) },
-      { role: 'user', content: message }
-    ],
-    stream: true
+
+  const result = streamText({
+    model: anthropic('claude-haiku-4-5-20251001'),
+    system: buildSystemPrompt(context.user, context.sessions),
+    messages,
   });
-  
-  // 4. Stream response back
-  return new Response(response.body);
+
+  return result.toDataStreamResponse();
 }
+```
+
+### Chat Component (SvelteKit)
+```svelte
+<!-- src/routes/(dashboard)/chat/+page.svelte -->
+<script lang="ts">
+  import { useChat } from '@ai-sdk/svelte';
+
+  const { messages, input, handleSubmit } = useChat({
+    api: '/api/chat',
+  });
+</script>
+
+{#each $messages as message}
+  <div class={message.role === 'user' ? 'justify-end' : 'justify-start'}>
+    {message.content}
+  </div>
+{/each}
+
+<form on:submit={handleSubmit}>
+  <input bind:value={$input} placeholder="Talk to Musashi..." />
+</form>
 ```
 
 ---
@@ -283,45 +281,57 @@ export async function POST(req: Request) {
 
 ### Submission Stats
 ```typescript
-// lib/db/stats.ts
+// src/lib/server/db/stats.ts
+import { db } from '$lib/server/db';
+import { events, sessions, techniques } from '$drizzle/schema';
+import { eq, gte, and, count, sql } from 'drizzle-orm';
 
-export async function getSubmissionStats(userId: string, days: number = 30) {
+export async function getSubmissionStats(userId: string, days = 30) {
   const since = new Date(Date.now() - days * 24 * 60 * 60 * 1000);
-  
-  return await prisma.event.groupBy({
-    by: ['techniqueId'],
-    where: {
-      session: { userId },
-      type: 'SUCCESS',
-      session: { date: { gte: since } }
-    },
-    _count: true
-  });
+
+  return await db
+    .select({
+      techniqueId: events.techniqueId,
+      techniqueName: techniques.name,
+      count: count(),
+    })
+    .from(events)
+    .innerJoin(sessions, eq(events.sessionId, sessions.id))
+    .innerJoin(techniques, eq(events.techniqueId, techniques.id))
+    .where(
+      and(
+        eq(sessions.userId, userId),
+        eq(events.type, 'success'),
+        gte(sessions.date, since)
+      )
+    )
+    .groupBy(events.techniqueId, techniques.name);
 }
 ```
 
 ### Training Consistency
 ```typescript
 export async function getTrainingStreak(userId: string) {
-  const sessions = await prisma.session.findMany({
-    where: { userId },
-    orderBy: { date: 'desc' },
-    select: { date: true }
-  });
-  
-  // Calculate current streak
+  const result = await db
+    .select({ date: sessions.date })
+    .from(sessions)
+    .where(eq(sessions.userId, userId))
+    .orderBy(sql`${sessions.date} desc`);
+
   let streak = 0;
   const today = new Date();
-  
-  for (const session of sessions) {
-    const daysDiff = Math.floor((today - session.date) / (1000 * 60 * 60 * 24));
+
+  for (const session of result) {
+    const daysDiff = Math.floor(
+      (today.getTime() - session.date.getTime()) / (1000 * 60 * 60 * 24)
+    );
     if (daysDiff === streak) {
       streak++;
     } else {
       break;
     }
   }
-  
+
   return streak;
 }
 ```
@@ -331,66 +341,59 @@ export async function getTrainingStreak(userId: string) {
 ## 🎨 UI Components Pattern
 
 ### Chat Message Component
-```typescript
-// components/chat/message.tsx
+```svelte
+<!-- src/lib/components/chat/Message.svelte -->
+<script lang="ts">
+  import { cn } from '$lib/utils';
+  import Avatar from '$lib/components/ui/avatar/avatar.svelte';
 
-interface MessageProps {
-  role: 'user' | 'assistant';
-  content: string;
-  timestamp: Date;
-}
+  let { role, content, timestamp }: {
+    role: 'user' | 'assistant';
+    content: string;
+    timestamp: Date;
+  } = $props();
+</script>
 
-export function Message({ role, content, timestamp }: MessageProps) {
-  return (
-    <div className={cn(
-      "flex mb-4",
-      role === 'user' ? 'justify-end' : 'justify-start'
-    )}>
-      {role === 'assistant' && <Avatar src="/musashi.png" />}
-      
-      <div className={cn(
-        "max-w-[70%] px-4 py-2 rounded-lg",
-        role === 'user' 
-          ? 'bg-primary text-primary-foreground' 
-          : 'bg-muted'
-      )}>
-        <p className="text-sm">{content}</p>
-        <span className="text-xs opacity-50">
-          {timestamp.toLocaleTimeString()}
-        </span>
-      </div>
-      
-      {role === 'user' && <Avatar src={user.avatar} />}
-    </div>
-  );
-}
+<div class={cn('flex mb-4', role === 'user' ? 'justify-end' : 'justify-start')}>
+  {#if role === 'assistant'}
+    <Avatar src="/musashi.png" />
+  {/if}
+
+  <div class={cn(
+    'max-w-[70%] px-4 py-2 rounded-lg',
+    role === 'user' ? 'bg-primary text-primary-foreground' : 'bg-muted'
+  )}>
+    <p class="text-sm">{content}</p>
+    <span class="text-xs opacity-50">
+      {timestamp.toLocaleTimeString()}
+    </span>
+  </div>
+
+  {#if role === 'user'}
+    <Avatar src={user.avatar} />
+  {/if}
+</div>
 ```
 
 ### Quick-Select Buttons
-```typescript
-// components/chat/quick-select.tsx
+```svelte
+<!-- src/lib/components/chat/QuickSelect.svelte -->
+<script lang="ts">
+  import { Button } from '$lib/components/ui/button';
 
-interface QuickSelectProps {
-  options: string[];
-  onSelect: (value: string) => void;
-}
+  let { options, onSelect }: {
+    options: string[];
+    onSelect: (value: string) => void;
+  } = $props();
+</script>
 
-export function QuickSelect({ options, onSelect }: QuickSelectProps) {
-  return (
-    <div className="grid grid-cols-2 gap-2">
-      {options.map(option => (
-        <Button
-          key={option}
-          variant="outline"
-          onClick={() => onSelect(option)}
-          className="w-full"
-        >
-          {option}
-        </Button>
-      ))}
-    </div>
-  );
-}
+<div class="grid grid-cols-2 gap-2">
+  {#each options as option}
+    <Button variant="outline" class="w-full" onclick={() => onSelect(option)}>
+      {option}
+    </Button>
+  {/each}
+</div>
 ```
 
 ---
@@ -493,28 +496,29 @@ npm run lint
 
 ```bash
 # Development
-npm run dev                    # Start dev server
+npm run dev                    # Start dev server (localhost:5173)
 npm run build                  # Build for production
-npm run start                  # Start production server
+npm run preview                # Preview production build locally
 
 # Database
-npx prisma studio              # Open DB GUI
-npx prisma migrate dev         # Create migration
-npx prisma db seed             # Seed data
-npx prisma generate            # Regenerate Prisma Client
+npx drizzle-kit studio         # Open Drizzle Studio (DB GUI)
+npx drizzle-kit push           # Push schema changes to database
+npx drizzle-kit generate       # Generate migration files
+npx tsx drizzle/seed.ts        # Seed data
 
 # Code Quality
 npm run lint                   # ESLint
 npm run format                 # Prettier
-npm run type-check             # TypeScript
+npm run check                  # SvelteKit type checking (svelte-check)
 
 # Deployment
-git push origin main           # Auto-deploys via Coolify
+git push origin main           # Auto-deploys via Vercel
 
 # Monitoring
 # PostHog: https://app.posthog.com
 # Sentry: https://sentry.io
 # Stripe: https://dashboard.stripe.com
+# Supabase: https://supabase.com/dashboard
 ```
 
 ---
@@ -530,9 +534,9 @@ git push origin main           # Auto-deploys via Coolify
 | **Sentry Errors** | https://sentry.io |
 | **Stripe Dashboard** | https://dashboard.stripe.com |
 | **OpenAI Usage** | https://platform.openai.com/usage |
-| **Clerk Dashboard** | https://dashboard.clerk.com |
+| **Supabase Dashboard** | https://supabase.com/dashboard |
 
 ---
 
-**Last Updated**: October 13, 2025  
+**Last Updated**: March 24, 2026
 **Maintained By**: Carlos (Product Owner + Developer)
