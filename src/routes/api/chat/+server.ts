@@ -5,8 +5,24 @@ import { OPENROUTER_API_KEY } from '$env/static/private';
 import { db } from '$lib/server/db';
 import { users, sessions, messageCounts, contentLinks, conversations, messages as messagesTable } from '$lib/server/db/schema';
 import { eq, and, gte, desc, sql } from 'drizzle-orm';
+import { z } from 'zod';
 import { buildSystemPrompt } from '$lib/server/ai/system-prompt';
 import type { RequestHandler } from './$types';
+
+const uiMessagePartSchema = z.object({
+	type: z.string(),
+	text: z.string().optional()
+}).passthrough();
+
+const uiMessageSchema = z.object({
+	id: z.string(),
+	role: z.enum(['user', 'assistant', 'system']),
+	parts: z.array(uiMessagePartSchema).optional()
+}).passthrough();
+
+export const chatRequestSchema = z.object({
+	messages: z.array(uiMessageSchema).min(1, 'At least one message is required')
+});
 
 const MESSAGE_LIMITS = { free: 20, paid: 100 } as const;
 
@@ -24,7 +40,12 @@ export const POST: RequestHandler = async ({ request, locals }) => {
 		error(401, 'Unauthorized');
 	}
 
-	const { messages }: { messages: UIMessage[] } = await request.json();
+	const rawBody = await request.json();
+	const parsed = chatRequestSchema.safeParse(rawBody);
+	if (!parsed.success) {
+		error(400, `Invalid chat request: ${parsed.error.issues.map((i) => i.message).join(', ')}`);
+	}
+	const { messages } = parsed.data as { messages: UIMessage[] };
 
 	const user = await db.query.users.findFirst({
 		where: eq(users.authId, authUser.id)
