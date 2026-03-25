@@ -3,10 +3,20 @@ import { streamText, convertToModelMessages, type UIMessage } from 'ai';
 import { createAnthropic } from '@ai-sdk/anthropic';
 import { ANTHROPIC_API_KEY } from '$env/static/private';
 import { db } from '$lib/server/db';
-import { users, sessions } from '$lib/server/db/schema';
-import { eq, desc } from 'drizzle-orm';
+import { users, sessions, messageCounts } from '$lib/server/db/schema';
+import { eq, and, gte, desc, sql } from 'drizzle-orm';
 import { buildSystemPrompt } from '$lib/server/ai/system-prompt';
 import type { RequestHandler } from './$types';
+
+const MESSAGE_LIMITS = { free: 20, paid: 100 } as const;
+
+function getWeekStart(): Date {
+	const now = new Date();
+	const day = now.getUTCDay();
+	const diff = day === 0 ? 6 : day - 1; // Monday = 0
+	const monday = new Date(Date.UTC(now.getUTCFullYear(), now.getUTCMonth(), now.getUTCDate() - diff));
+	return monday;
+}
 
 export const POST: RequestHandler = async ({ request, locals }) => {
 	const { user: authUser } = await locals.safeGetUser();
@@ -22,6 +32,32 @@ export const POST: RequestHandler = async ({ request, locals }) => {
 
 	if (!user) {
 		error(404, 'User profile not found');
+	}
+
+	// Rate limiting
+	const weekStart = getWeekStart();
+	const limit = MESSAGE_LIMITS[user.subscriptionTier];
+
+	const existing = await db.query.messageCounts.findFirst({
+		where: and(
+			eq(messageCounts.userId, user.id),
+			gte(messageCounts.weekStart, weekStart)
+		)
+	});
+
+	if (existing) {
+		if (existing.count >= limit) {
+			error(429, 'Message limit reached. Upgrade to Pro for 100 messages/week.');
+		}
+		await db.update(messageCounts)
+			.set({ count: sql`${messageCounts.count} + 1` })
+			.where(eq(messageCounts.id, existing.id));
+	} else {
+		await db.insert(messageCounts).values({
+			userId: user.id,
+			weekStart,
+			count: 1
+		});
 	}
 
 	const recentSessions = await db.query.sessions.findMany({
