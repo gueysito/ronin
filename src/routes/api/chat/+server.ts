@@ -7,17 +7,10 @@ import { users, sessions, messageCounts, contentLinks, conversations, messages a
 import { eq, and, gte, desc, sql } from 'drizzle-orm';
 import { chatRequestSchema } from '$lib/server/schemas/chat';
 import { buildSystemPrompt } from '$lib/server/ai/system-prompt';
+import { getWeekStart } from '$lib/server/utils/week';
 import type { RequestHandler } from './$types';
 
 const MESSAGE_LIMITS = { free: 20, paid: 100 } as const;
-
-function getWeekStart(): Date {
-	const now = new Date();
-	const day = now.getUTCDay();
-	const diff = day === 0 ? 6 : day - 1; // Monday = 0
-	const monday = new Date(Date.UTC(now.getUTCFullYear(), now.getUTCMonth(), now.getUTCDate() - diff));
-	return monday;
-}
 
 export const POST: RequestHandler = async ({ request, locals }) => {
 	const { user: authUser } = await locals.safeGetUser();
