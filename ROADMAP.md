@@ -33,11 +33,11 @@
 - [ ] Create wireframe sketches (Chat + Dashboard + Progress screens) - Template: `docs/mvp-homework/06-wireframes.md`
 
 ### Project Scaffolding ⏳ PENDING (Next After Homework)
-- [ ] Initialize Next.js 14 with TypeScript
-- [ ] Configure Tailwind CSS + shadcn/ui
-- [ ] Set up Prisma with PostgreSQL schema (requires taxonomy from homework)
-- [ ] Configure Clerk authentication
-- [ ] Set up project structure (/app, /components, /lib, /prisma)
+- [ ] Initialize SvelteKit with TypeScript
+- [ ] Configure Tailwind CSS v4 + shadcn-svelte
+- [ ] Set up Drizzle with PostgreSQL schema (requires taxonomy from homework)
+- [ ] Configure Supabase authentication
+- [ ] Set up project structure (/src/routes, /src/lib/components, /src/lib/server, /drizzle)
 - [ ] Create design system foundation (tokens, colors, typography)
 - [ ] Set up environment variables template (.env.example)
 - [ ] Initialize Git repository
@@ -50,28 +50,28 @@
 ### Week 1-2: Foundation & Auth 📅 NOT STARTED
 **Goal**: User can sign up and see basic chat UI
 
-- [ ] Set up Next.js project with App Router
+- [ ] Set up SvelteKit project
 - [ ] Install and configure Tailwind CSS
-- [ ] Install shadcn/ui components (Button, Input, Card, Dialog)
+- [ ] Install shadcn-svelte components (Button, Input, Card, Dialog)
 - [ ] Create design system (colors, spacing, typography)
-- [ ] Set up Clerk authentication
+- [ ] Set up Supabase authentication
   - [ ] Sign up flow
   - [ ] Sign in flow
   - [ ] Protected routes
-- [ ] Create Prisma schema v1
+- [ ] Create Drizzle schema v1
   - [ ] User model
   - [ ] Session model
   - [ ] Event model
   - [ ] Technique model
   - [ ] Position model
   - [ ] Goal model
-- [ ] Run initial migration
+- [ ] Push schema to database
 - [ ] Create basic chat UI shell
   - [ ] Message display
   - [ ] Input field
   - [ ] Send button
   - [ ] Loading states
-- [ ] Deploy to Coolify (staging environment)
+- [ ] Deploy to Vercel (staging environment)
 
 **Success Criteria**: User can sign up, log in, and see empty chat screen
 
@@ -95,7 +95,7 @@
   - [ ] Training frequency
   - [ ] Current physical/mental state
 - [ ] Create Zod schemas for onboarding data
-- [ ] Store onboarding data in Prisma
+- [ ] Store onboarding data via Drizzle
 - [ ] Create profile review screen
 - [ ] Add "Edit Profile" functionality
 - [ ] Test onboarding flow (5 test users)
@@ -121,7 +121,7 @@
   - [ ] Map user input → position_id
   - [ ] Handle "Other" entries
   - [ ] Validate data with Zod
-- [ ] Set up OpenAI API integration
+- [ ] Set up AI SDK integration (Anthropic/OpenAI)
   - [ ] Create API route `/api/chat`
   - [ ] Implement rate limiting (20 messages/week for free)
   - [ ] Add streaming support
@@ -131,7 +131,7 @@
   - [ ] Generate encouragement
   - [ ] Suggest next focus area
   - [ ] Return 1-2 hardcoded video links
-- [ ] Store session data in Prisma
+- [ ] Store session data via Drizzle
   - [ ] Create session record
   - [ ] Create event records (submissions)
   - [ ] Link to user profile
@@ -165,7 +165,7 @@
   - [ ] Compute training frequency
   - [ ] Analyze energy/mood patterns
   - [ ] Identify most common struggles
-- [ ] Integrate Recharts
+- [ ] Integrate Layer Cake
   - [ ] Install library
   - [ ] Create reusable chart components
   - [ ] Style charts to match design system
@@ -309,7 +309,7 @@
 
 ### Week 10: Basic RAG (Semantic Memory) 📅 NOT STARTED
 - [ ] Install pgvector extension in Postgres
-- [ ] Update Prisma schema
+- [ ] Update Drizzle schema
   - [ ] Add `memories` table with vector column
   - [ ] Migration script
 - [ ] Create embedding generation function

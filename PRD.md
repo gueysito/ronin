@@ -104,7 +104,7 @@ An AI coach named "Musashi" that:
 
 ### 4.1 Epic 1: User Authentication & Onboarding
 
-#### R1.1: Authentication (via Clerk)
+#### R1.1: Authentication (via Supabase Auth)
 - Users MUST be able to sign up with email (magic link or password)
 - Social auth (Google OAuth) optional but recommended
 - Session management (persistent login across devices)
@@ -124,7 +124,7 @@ An AI coach named "Musashi" that:
 - User MUST be able to edit profile later (Settings screen)
 
 #### R1.3: Profile Storage
-- All onboarding data stored in `users` table (Prisma)
+- All onboarding data stored in `users` table (Drizzle)
 - Goals stored in separate `goals` table (enables tracking progress toward goals)
 - Profile completion status tracked (for analytics: "Did user finish onboarding?")
 
@@ -649,7 +649,7 @@ If the primary provider fails (timeout, 5xx, rate limit), the SDK switches to th
 - ✅ Basic AI feedback (encouragement + tip + video link)
 - ✅ Simple dashboard (submission stats, training calendar, energy trends)
 - ✅ Weekly summaries (delivered in chat)
-- ✅ Clerk auth + Stripe payments
+- ✅ Supabase Auth + Stripe payments
 - ✅ Skill Tree data structure (backend only)
 
 **Excluded** (deferred to Phase 1.5 or later):
@@ -691,7 +691,7 @@ If the primary provider fails (timeout, 5xx, rate limit), the SDK switches to th
 | **Skill Tree too subjective** | Medium (user confusion) | High | Start simple (5/20/50 taxonomy), allow "Other," crowdsource improvements post-launch |
 | **LLM costs spiral** | Medium (margin compression) | Low | Rate limiting, use GPT-4o-mini (cheap), monitor per-user costs |
 | **Competition launches similar product** | Medium (market share loss) | Medium | Ship fast (6 weeks), build community moat, focus on mental game (harder to copy) |
-| **Users abuse free trial** | Low (manageable cost) | Medium | 20 message/week limit, require email (no burner accounts via Clerk) |
+| **Users abuse free trial** | Low (manageable cost) | Medium | 20 message/week limit, require email (no burner accounts via Supabase Auth) |
 
 ---
 

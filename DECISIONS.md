@@ -80,7 +80,7 @@
 - ✅ Simple dashboard (submission counts, training frequency, energy trends)
 - ✅ Weekly AI summary (delivered in chat)
 - ✅ Session history retrieval (last 3-5 sessions as context)
-- ✅ Clerk authentication
+- ✅ Supabase authentication
 - ✅ PostgreSQL schema with sessions/events/techniques/users
 - ✅ Zod validation on all inputs
 - ✅ Basic Skill Tree data structure (backend only, no visualization)
@@ -266,15 +266,15 @@ Net profit: $8.38 (84% margin)
 ### Code Quality Standards
 - **TypeScript**: Strict mode, no `any` types
 - **Zod**: Validate all external inputs (user, API, LLM)
-- **Prisma**: All DB queries typed
-- **ESLint**: Standard Next.js config
+- **Drizzle**: All DB queries typed
+- **ESLint**: Standard SvelteKit config
 - **Prettier**: Auto-format on save
 
 ### Git Strategy
 - **Main branch**: Production-ready code
 - **Feature branches**: `feature/chat-ui`, `feature/dashboard`
 - **Commits**: Conventional commits (`feat:`, `fix:`, `docs:`)
-- **Deployment**: Push to main → auto-deploy via Coolify
+- **Deployment**: Push to main → auto-deploy via Vercel
 
 ---
 
