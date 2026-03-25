@@ -112,8 +112,8 @@ export const POST: RequestHandler = async ({ request, locals }) => {
 	const lastUserMsg = messages.filter(m => m.role === 'user').pop();
 	if (lastUserMsg) {
 		const textContent = lastUserMsg.parts
-			?.filter((p: any) => p.type === 'text')
-			.map((p: any) => p.text)
+			?.filter((p): p is Extract<typeof p, { type: 'text' }> => p.type === 'text')
+			.map((p) => p.text)
 			.join('') ?? '';
 		if (textContent) {
 			await db.insert(messagesTable).values({
