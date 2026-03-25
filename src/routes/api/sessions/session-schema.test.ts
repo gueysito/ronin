@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest';
-import { sessionSchema } from './+server';
+import { sessionSchema } from '$lib/server/schemas/session';
 
 describe('sessionSchema', () => {
 	const validSession = {

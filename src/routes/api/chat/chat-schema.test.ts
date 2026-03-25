@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest';
-import { chatRequestSchema } from './+server';
+import { chatRequestSchema } from '$lib/server/schemas/chat';
 
 describe('chatRequestSchema', () => {
 	const validRequest = {
