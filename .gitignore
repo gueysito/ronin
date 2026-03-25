@@ -10,3 +10,4 @@ dist/
 *.log
 vite.config.js.timestamp-*
 vite.config.ts.timestamp-*
+supabase/.temp/
