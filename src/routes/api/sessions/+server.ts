@@ -2,7 +2,25 @@ import { json, error } from '@sveltejs/kit';
 import { db } from '$lib/server/db';
 import { users, sessions, events, techniques } from '$lib/server/db/schema';
 import { eq } from 'drizzle-orm';
+import { z } from 'zod';
 import type { RequestHandler } from './$types';
+
+const techniqueEntrySchema = z.object({
+	slug: z.string().min(1),
+	count: z.number().int().positive().optional()
+});
+
+export const sessionSchema = z.object({
+	type: z.enum(['rolling', 'drilling', 'open_mat', 'competition', 'private_lesson']),
+	durationMinutes: z.number().int().positive(),
+	intensityRpe: z.number().int().min(1).max(10),
+	energy: z.number().int().min(1).max(10),
+	mood: z.enum(['confident', 'focused', 'frustrated', 'anxious', 'flow_state']).optional(),
+	notes: z.string().optional(),
+	positionsWorked: z.array(z.string()).optional().default([]),
+	techniquesHit: z.array(techniqueEntrySchema).optional().default([]),
+	techniquesAgainst: z.array(techniqueEntrySchema).optional().default([])
+});
 
 export const POST: RequestHandler = async ({ request, locals }) => {
 	const { user: authUser } = await locals.safeGetUser();
@@ -13,7 +31,12 @@ export const POST: RequestHandler = async ({ request, locals }) => {
 	});
 	if (!user) error(404, 'User not found');
 
-	const body = await request.json();
+	const rawBody = await request.json();
+	const parsed = sessionSchema.safeParse(rawBody);
+	if (!parsed.success) {
+		error(400, `Invalid session data: ${parsed.error.issues.map((i) => i.message).join(', ')}`);
+	}
+	const body = parsed.data;
 
 	const [session] = await db.insert(sessions).values({
 		userId: user.id,
