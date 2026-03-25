@@ -2,7 +2,7 @@ import { json, error } from '@sveltejs/kit';
 import { stripe } from '$lib/server/stripe';
 import { STRIPE_WEBHOOK_SECRET } from '$env/static/private';
 import { db } from '$lib/server/db';
-import { users } from '$lib/server/db/schema';
+import { users, stripeProcessedEvents } from '$lib/server/db/schema';
 import { eq } from 'drizzle-orm';
 import type { RequestHandler } from './$types';
 
@@ -19,15 +19,25 @@ export const POST: RequestHandler = async ({ request }) => {
 		error(400, 'Invalid signature');
 	}
 
+	// Idempotency: skip already-processed events
+	const existing = await db.query.stripeProcessedEvents.findFirst({
+		where: eq(stripeProcessedEvents.id, event.id)
+	});
+	if (existing) {
+		return json({ received: true, duplicate: true });
+	}
+
 	switch (event.type) {
 		case 'checkout.session.completed': {
 			const session = event.data.object;
 			const userId = session.metadata?.userId;
-			if (userId) {
-				await db.update(users)
-					.set({ subscriptionTier: 'paid', updatedAt: new Date() })
-					.where(eq(users.id, userId));
+			if (!userId) {
+				console.error(`[stripe] checkout.session.completed missing userId in metadata, event: ${event.id}`);
+				break;
 			}
+			await db.update(users)
+				.set({ subscriptionTier: 'paid', updatedAt: new Date() })
+				.where(eq(users.id, userId));
 			break;
 		}
 		case 'customer.subscription.deleted': {
@@ -41,6 +51,9 @@ export const POST: RequestHandler = async ({ request }) => {
 			break;
 		}
 	}
+
+	// Mark event as processed
+	await db.insert(stripeProcessedEvents).values({ id: event.id }).onConflictDoNothing();
 
 	return json({ received: true });
 };

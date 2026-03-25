@@ -2,17 +2,17 @@ import type { PageServerLoad } from './$types';
 import { db } from '$lib/server/db';
 import { messageCounts } from '$lib/server/db/schema';
 import { eq, and, gte } from 'drizzle-orm';
+import { getWeekStart } from '$lib/server/utils/week';
 
 export const load: PageServerLoad = async ({ parent }) => {
 	const { profile } = await parent();
 
-	const now = new Date();
-	const startOfWeek = getStartOfWeek(now);
+	const weekStart = getWeekStart();
 
 	const weekCount = await db.query.messageCounts.findFirst({
 		where: and(
 			eq(messageCounts.userId, profile.id),
-			gte(messageCounts.weekStart, startOfWeek)
+			gte(messageCounts.weekStart, weekStart)
 		)
 	});
 
@@ -23,12 +23,3 @@ export const load: PageServerLoad = async ({ parent }) => {
 		messageLimit
 	};
 };
-
-function getStartOfWeek(date: Date): Date {
-	const d = new Date(date);
-	const day = d.getDay();
-	const diff = d.getDate() - day + (day === 0 ? -6 : 1);
-	d.setDate(diff);
-	d.setHours(0, 0, 0, 0);
-	return d;
-}

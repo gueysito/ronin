@@ -14,7 +14,16 @@ export const POST: RequestHandler = async ({ request, locals }) => {
 	});
 	if (!user) error(404, 'User not found');
 
-	const rawBody = await request.json();
+	if (!request.headers.get('content-type')?.includes('application/json')) {
+		error(415, 'Content-Type must be application/json');
+	}
+
+	let rawBody: unknown;
+	try {
+		rawBody = await request.json();
+	} catch {
+		error(400, 'Invalid JSON body');
+	}
 	const parsed = sessionSchema.safeParse(rawBody);
 	if (!parsed.success) {
 		error(400, `Invalid session data: ${parsed.error.issues.map((i) => i.message).join(', ')}`);

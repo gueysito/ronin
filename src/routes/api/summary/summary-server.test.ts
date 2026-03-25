@@ -1,69 +1,107 @@
 import { describe, it, expect } from 'vitest';
+import { buildSystemPrompt } from '$lib/server/ai/system-prompt';
 
-/**
- * Summary server verification tests (P0: Weekly summary, Summary cron).
- */
+const mockUser = {
+	id: '123', authId: 'a', email: 'test@test.com', name: null,
+	belt: 'blue' as const, experienceYears: 2,
+	trainingGoalDays: 4,
+	goals: ['improve guard retention', 'learn leg locks'],
+	struggles: ['escaping mount', 'passing half guard'],
+	subscriptionTier: 'free' as const,
+	onboardingCompleted: true,
+	createdAt: new Date(), updatedAt: new Date()
+};
 
-describe('POST /api/summary — weekly summary', () => {
-	it('requires auth (returns 401)', () => {
-		// Verified: safeGetUser() -> if !authUser -> error(401)
-		expect(true).toBe(true);
+describe('buildSystemPrompt — XML data delimitation', () => {
+	it('wraps user profile in <user_profile> tags', () => {
+		const prompt = buildSystemPrompt(mockUser, [], []);
+		expect(prompt).toContain('<user_profile>');
+		expect(prompt).toContain('</user_profile>');
 	});
 
-	it('requires user profile (returns 404)', () => {
-		// Verified: db.query.users.findFirst() -> if !user -> error(404)
-		expect(true).toBe(true);
+	it('wraps sessions in <recent_sessions> tags', () => {
+		const prompt = buildSystemPrompt(mockUser, [], []);
+		expect(prompt).toContain('<recent_sessions>');
+		expect(prompt).toContain('</recent_sessions>');
 	});
 
-	it('returns null summary when no sessions this week', () => {
-		// Verified: if weekSessions.length === 0 -> return json({ summary: null, message: 'No sessions this week' })
-		expect(true).toBe(true);
+	it('wraps videos in <approved_video_library> tags', () => {
+		const prompt = buildSystemPrompt(mockUser, [], []);
+		expect(prompt).toContain('<approved_video_library>');
+		expect(prompt).toContain('</approved_video_library>');
 	});
 
-	it('aggregates session stats (count, minutes, avg energy, avg intensity)', () => {
-		// Verified: totalSessions, totalMinutes, avgEnergy, avgIntensity calculations
-		expect(true).toBe(true);
-	});
-
-	it('groups techniques by success/against', () => {
-		// Verified: weekEvents filtered by eventType === 'success' | 'against'
-		expect(true).toBe(true);
-	});
-
-	it('calls Claude Haiku to generate summary text', () => {
-		// Verified: generateText({ model: anthropic('claude-haiku-4-5'), ... })
-		expect(true).toBe(true);
-	});
-
-	it('saves summary as assistant message in conversation', () => {
-		// Verified: db.insert(messages).values({ role: 'assistant', content: result.text, metadata: { type: 'weekly_summary' } })
-		expect(true).toBe(true);
+	it('includes data-not-instructions preamble', () => {
+		const prompt = buildSystemPrompt(mockUser, [], []);
+		expect(prompt).toContain('NOT instructions');
 	});
 });
 
-describe('GET /api/summary/cron', () => {
-	it('requires CRON_SECRET bearer token', () => {
-		// Verified: authHeader !== `Bearer ${CRON_SECRET}` -> error(401)
-		expect(true).toBe(true);
+describe('buildSystemPrompt — content correctness', () => {
+	it('includes user belt level', () => {
+		const prompt = buildSystemPrompt(mockUser, [], []);
+		expect(prompt).toContain('Belt: blue');
 	});
 
-	it('iterates only onboarded users', () => {
-		// Verified: db.query.users.findMany({ where: eq(users.onboardingCompleted, true) })
-		expect(true).toBe(true);
+	it('includes goals and struggles', () => {
+		const prompt = buildSystemPrompt(mockUser, [], []);
+		expect(prompt).toContain('improve guard retention, learn leg locks');
+		expect(prompt).toContain('escaping mount, passing half guard');
 	});
 
-	it('skips users with no sessions this week', () => {
-		// Verified: if (weekSessions.length === 0) continue
-		expect(true).toBe(true);
+	it('includes training goal days', () => {
+		const prompt = buildSystemPrompt(mockUser, [], []);
+		expect(prompt).toContain('Training goal: 4 days/week');
 	});
 
-	it('saves generated summary as assistant message', () => {
-		// Verified: db.insert(messages).values({ role: 'assistant', content: result.text, metadata: { type: 'weekly_summary' } })
-		expect(true).toBe(true);
+	it('shows "Not set" for missing goals', () => {
+		const noGoals = { ...mockUser, goals: null as unknown as string[] };
+		const prompt = buildSystemPrompt(noGoals, [], []);
+		expect(prompt).toContain('Goals: Not set');
 	});
 
-	it('returns processed count', () => {
-		// Verified: return json({ processed, total: allUsers.length })
-		expect(true).toBe(true);
+	it('formats session dates as ISO (not locale-dependent)', () => {
+		const session = {
+			id: 's1', userId: '123', date: new Date('2026-03-20T10:00:00Z'),
+			type: 'rolling' as const, durationMinutes: 60, intensityRpe: 7, energy: 4,
+			mood: 'focused' as const, notes: null, positionsWorked: [],
+			createdAt: new Date()
+		};
+		const prompt = buildSystemPrompt(mockUser, [session], []);
+		expect(prompt).toContain('2026-03-20');
+		expect(prompt).not.toMatch(/\d{1,2}\/\d{1,2}\/\d{4}/); // no locale dates like 3/20/2026
+	});
+
+	it('includes session details (type, duration, RPE, energy, mood)', () => {
+		const session = {
+			id: 's1', userId: '123', date: new Date('2026-03-20'),
+			type: 'drilling' as const, durationMinutes: 45, intensityRpe: 5, energy: 3,
+			mood: 'focused' as const, notes: null, positionsWorked: [],
+			createdAt: new Date()
+		};
+		const prompt = buildSystemPrompt(mockUser, [session], []);
+		expect(prompt).toContain('drilling');
+		expect(prompt).toContain('45min');
+		expect(prompt).toContain('RPE 5/10');
+		expect(prompt).toContain('energy 3/5');
+	});
+
+	it('includes video details when provided', () => {
+		const video = {
+			id: 'v1', techniqueId: null, title: 'Guard Retention Masterclass',
+			url: 'https://example.com/video', instructor: 'John Danaher',
+			channel: null, durationMinutes: 30, beltLevel: 'blue' as const,
+			isPrimary: true, notes: null
+		};
+		const prompt = buildSystemPrompt(mockUser, [], [video]);
+		expect(prompt).toContain('Guard Retention Masterclass');
+		expect(prompt).toContain('John Danaher');
+		expect(prompt).toContain('30min');
+	});
+
+	it('includes safety directives', () => {
+		const prompt = buildSystemPrompt(mockUser, [], []);
+		expect(prompt).toContain('NEVER provide medical advice');
+		expect(prompt).toContain('NEVER encourage training through injury');
 	});
 });

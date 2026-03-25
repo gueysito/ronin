@@ -1,5 +1,5 @@
 const CACHE_NAME = 'matmentor-v1';
-const SHELL_ASSETS = ['/', '/chat', '/game', '/progress', '/profile'];
+const SHELL_ASSETS = ['/'];
 
 self.addEventListener('install', (event) => {
 	event.waitUntil(
@@ -18,10 +18,11 @@ self.addEventListener('activate', (event) => {
 });
 
 self.addEventListener('fetch', (event) => {
-	if (event.request.url.includes('/api/')) {
-		event.respondWith(
-			fetch(event.request).catch(() => caches.match(event.request))
-		);
+	// Never cache API calls or authenticated routes
+	const url = new URL(event.request.url);
+	const authRoutes = ['/chat', '/game', '/progress', '/profile', '/onboarding'];
+	if (url.pathname.startsWith('/api/') || authRoutes.some((r) => url.pathname.startsWith(r))) {
+		event.respondWith(fetch(event.request));
 		return;
 	}
 

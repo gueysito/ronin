@@ -2,6 +2,7 @@ import type { PageServerLoad } from './$types';
 import { db } from '$lib/server/db';
 import { sessions } from '$lib/server/db/schema';
 import { eq, desc } from 'drizzle-orm';
+import { getWeekStart } from '$lib/server/utils/week';
 
 export const load: PageServerLoad = async ({ parent }) => {
 	const { profile } = await parent();
@@ -12,9 +13,9 @@ export const load: PageServerLoad = async ({ parent }) => {
 	});
 
 	const now = new Date();
-	const startOfWeek = getStartOfWeek(now);
+	const weekStart = getWeekStart();
 
-	const thisWeekSessions = allSessions.filter((s) => s.date >= startOfWeek);
+	const thisWeekSessions = allSessions.filter((s) => s.date >= weekStart);
 
 	// Current streak (consecutive days trained)
 	const trainedDates = new Set(allSessions.map((s) => toDateString(s.date)));
@@ -110,15 +111,6 @@ export const load: PageServerLoad = async ({ parent }) => {
 		totalSessions: allSessions.length
 	};
 };
-
-function getStartOfWeek(date: Date): Date {
-	const d = new Date(date);
-	const day = d.getDay();
-	const diff = d.getDate() - day + (day === 0 ? -6 : 1);
-	d.setDate(diff);
-	d.setHours(0, 0, 0, 0);
-	return d;
-}
 
 function toDateString(d: Date): string {
 	return d.toISOString().split('T')[0];

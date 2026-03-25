@@ -1,4 +1,4 @@
-import { redirect } from '@sveltejs/kit';
+import { redirect, error } from '@sveltejs/kit';
 import { db } from '$lib/server/db';
 import { users } from '$lib/server/db/schema';
 import { eq } from 'drizzle-orm';
@@ -15,9 +15,12 @@ export const load: LayoutServerLoad = async ({ locals }) => {
 	});
 
 	if (!profile) {
+		if (!authUser.email) {
+			error(400, 'An email address is required to create an account.');
+		}
 		const [newUser] = await db.insert(users).values({
 			authId: authUser.id,
-			email: authUser.email!
+			email: authUser.email
 		}).returning();
 		profile = newUser;
 	}
@@ -26,5 +29,6 @@ export const load: LayoutServerLoad = async ({ locals }) => {
 		redirect(303, '/onboarding');
 	}
 
-	return { profile };
+	const { authId: _, ...safeProfile } = profile;
+	return { profile: safeProfile };
 };

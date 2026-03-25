@@ -6,7 +6,7 @@ describe('sessionSchema', () => {
 		type: 'rolling',
 		durationMinutes: 60,
 		intensityRpe: 7,
-		energy: 8
+		energy: 4
 	};
 
 	it('accepts a valid minimal session', () => {

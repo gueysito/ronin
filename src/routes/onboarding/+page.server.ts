@@ -39,12 +39,15 @@ export const actions: Actions = {
 			'Every day': 7
 		};
 
-		if (!belt) return fail(400, { message: 'Belt is required' });
+		const validBelts = ['white', 'blue', 'purple', 'brown', 'black'] as const;
+		if (!belt || !validBelts.includes(belt as typeof validBelts[number])) {
+			return fail(400, { message: 'Invalid belt level' });
+		}
 
 		await db
 			.update(users)
 			.set({
-				belt: belt as 'white' | 'blue' | 'purple' | 'brown' | 'black',
+				belt: belt as typeof validBelts[number],
 				experienceYears: experienceMap[experience] ?? 1,
 				trainingGoalDays: frequencyMap[trainingFrequency] ?? 3,
 				goals,

@@ -7,9 +7,9 @@ const techniqueEntrySchema = z.object({
 
 export const sessionSchema = z.object({
 	type: z.enum(['rolling', 'drilling', 'open_mat', 'competition', 'private_lesson']),
-	durationMinutes: z.number().int().positive(),
+	durationMinutes: z.number().int().positive().max(720),
 	intensityRpe: z.number().int().min(1).max(10),
-	energy: z.number().int().min(1).max(10),
+	energy: z.number().int().min(1).max(5),
 	mood: z.enum(['confident', 'focused', 'frustrated', 'anxious', 'flow_state']).optional(),
 	notes: z.string().optional(),
 	positionsWorked: z.array(z.string()).optional().default([]),

@@ -4,7 +4,7 @@ import { createOpenAI } from '@ai-sdk/openai';
 import { OPENROUTER_API_KEY } from '$env/static/private';
 import { db } from '$lib/server/db';
 import { users, sessions, messageCounts, contentLinks, conversations, messages as messagesTable } from '$lib/server/db/schema';
-import { eq, and, gte, desc, sql } from 'drizzle-orm';
+import { eq, and, gte, lt, desc, sql } from 'drizzle-orm';
 import { chatRequestSchema } from '$lib/server/schemas/chat';
 import { buildSystemPrompt } from '$lib/server/ai/system-prompt';
 import { getWeekStart } from '$lib/server/utils/week';
@@ -18,7 +18,16 @@ export const POST: RequestHandler = async ({ request, locals }) => {
 		error(401, 'Unauthorized');
 	}
 
-	const rawBody = await request.json();
+	if (!request.headers.get('content-type')?.includes('application/json')) {
+		error(415, 'Content-Type must be application/json');
+	}
+
+	let rawBody: unknown;
+	try {
+		rawBody = await request.json();
+	} catch {
+		error(400, 'Invalid JSON body');
+	}
 	const parsed = chatRequestSchema.safeParse(rawBody);
 	if (!parsed.success) {
 		error(400, `Invalid chat request: ${parsed.error.issues.map((i) => i.message).join(', ')}`);
@@ -45,12 +54,13 @@ export const POST: RequestHandler = async ({ request, locals }) => {
 	});
 
 	if (existing) {
-		if (existing.count >= limit) {
+		const [updated] = await db.update(messageCounts)
+			.set({ count: sql`${messageCounts.count} + 1` })
+			.where(and(eq(messageCounts.id, existing.id), lt(messageCounts.count, limit)))
+			.returning();
+		if (!updated) {
 			error(429, 'Message limit reached. Upgrade to Pro for 100 messages/week.');
 		}
-		await db.update(messageCounts)
-			.set({ count: sql`${messageCounts.count} + 1` })
-			.where(eq(messageCounts.id, existing.id));
 	} else {
 		await db.insert(messageCounts).values({
 			userId: user.id,
@@ -96,6 +106,7 @@ export const POST: RequestHandler = async ({ request, locals }) => {
 		if (textContent) {
 			await db.insert(messagesTable).values({
 				conversationId: conversation.id,
+				userId: user.id,
 				role: 'user',
 				content: textContent
 			});
@@ -108,12 +119,16 @@ export const POST: RequestHandler = async ({ request, locals }) => {
 		messages: await convertToModelMessages(messages),
 		maxRetries: 2,
 		onFinish: async ({ text }) => {
-			// Save assistant response
-			await db.insert(messagesTable).values({
-				conversationId: conversation.id,
-				role: 'assistant',
-				content: text
-			});
+			try {
+				await db.insert(messagesTable).values({
+					conversationId: conversation.id,
+					userId: user.id,
+					role: 'assistant',
+					content: text
+				});
+			} catch (err) {
+				console.error('[chat] failed to persist assistant message:', err);
+			}
 		}
 	});
 

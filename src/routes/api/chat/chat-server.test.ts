@@ -1,77 +1,75 @@
 import { describe, it, expect } from 'vitest';
+import { chatRequestSchema } from '$lib/server/schemas/chat';
 
-/**
- * Chat server verification tests.
- * Verify the chat endpoint logic (P0: Chat with Musashi, Message persistence, Rate limiting)
- * by analyzing the server code structure.
- */
-
-describe('POST /api/chat — core flow', () => {
-	it('requires auth (returns 401 if safeGetUser returns null)', () => {
-		// Verified in +server.ts: safeGetUser() -> if !authUser -> error(401)
-		expect(true).toBe(true);
+describe('chatRequestSchema — strip behavior', () => {
+	it('strips unknown fields from messages', () => {
+		const input = {
+			messages: [{
+				id: '1',
+				role: 'user',
+				parts: [{ type: 'text', text: 'hello' }],
+				metadata: { injected: true },
+				tool_calls: [{ name: 'evil' }]
+			}]
+		};
+		const result = chatRequestSchema.safeParse(input);
+		expect(result.success).toBe(true);
+		if (result.success) {
+			const msg = result.data.messages[0];
+			expect(msg).not.toHaveProperty('metadata');
+			expect(msg).not.toHaveProperty('tool_calls');
+		}
 	});
 
-	it('requires user profile (returns 404 if not in DB)', () => {
-		// Verified: db.query.users.findFirst() -> if !user -> error(404)
-		expect(true).toBe(true);
+	it('strips unknown fields from message parts', () => {
+		const input = {
+			messages: [{
+				id: '1',
+				role: 'user',
+				parts: [{ type: 'text', text: 'hello', function_call: 'evil' }]
+			}]
+		};
+		const result = chatRequestSchema.safeParse(input);
+		expect(result.success).toBe(true);
+		if (result.success) {
+			const part = result.data.messages[0].parts![0];
+			expect(part).not.toHaveProperty('function_call');
+			expect(part).toEqual({ type: 'text', text: 'hello' });
+		}
 	});
 
-	it('validates request body with Zod schema', () => {
-		// Verified: chatRequestSchema.safeParse(rawBody) -> error(400) on failure
-		expect(true).toBe(true);
+	it('rejects empty messages array', () => {
+		const result = chatRequestSchema.safeParse({ messages: [] });
+		expect(result.success).toBe(false);
 	});
 
-	it('checks rate limit before processing', () => {
-		// Verified: MESSAGE_LIMITS = { free: 20, paid: 100 }
-		// existing.count >= limit -> error(429)
-		expect(true).toBe(true);
+	it('rejects missing messages field', () => {
+		expect(chatRequestSchema.safeParse({}).success).toBe(false);
 	});
 
-	it('increments message count for existing week', () => {
-		// Verified: db.update(messageCounts).set({ count: sql`count + 1` })
-		expect(true).toBe(true);
+	it('rejects non-array messages', () => {
+		expect(chatRequestSchema.safeParse({ messages: 'hello' }).success).toBe(false);
 	});
 
-	it('creates new message count row for new week', () => {
-		// Verified: db.insert(messageCounts).values({ userId, weekStart, count: 1 })
-		expect(true).toBe(true);
+	it('rejects invalid role', () => {
+		const result = chatRequestSchema.safeParse({
+			messages: [{ id: '1', role: 'admin', parts: [] }]
+		});
+		expect(result.success).toBe(false);
 	});
 
-	it('creates conversation if none exists', () => {
-		// Verified: if (!conversation) -> db.insert(conversations)
-		expect(true).toBe(true);
-	});
-
-	it('saves user message before streaming', () => {
-		// Verified: lastUserMsg text extracted -> db.insert(messagesTable) with role: 'user'
-		expect(true).toBe(true);
-	});
-
-	it('saves assistant response in onFinish callback', () => {
-		// Verified: streamText({ onFinish: async ({ text }) => db.insert(messagesTable) })
-		expect(true).toBe(true);
-	});
-
-	it('uses buildSystemPrompt with user data and sessions', () => {
-		// Verified: streamText({ system: buildSystemPrompt(user, recentSessions, videos) })
-		expect(true).toBe(true);
-	});
-
-	it('returns toUIMessageStreamResponse()', () => {
-		// Verified: return result.toUIMessageStreamResponse()
-		expect(true).toBe(true);
+	it('accepts message without parts (optional)', () => {
+		const result = chatRequestSchema.safeParse({
+			messages: [{ id: '1', role: 'user' }]
+		});
+		expect(result.success).toBe(true);
 	});
 });
 
 describe('Rate limiting constants', () => {
-	it('free tier limit is 20 messages/week', () => {
-		const MESSAGE_LIMITS = { free: 20, paid: 100 };
+	it('free tier = 20, paid tier = 100', () => {
+		const MESSAGE_LIMITS = { free: 20, paid: 100 } as const;
 		expect(MESSAGE_LIMITS.free).toBe(20);
-	});
-
-	it('paid tier limit is 100 messages/week', () => {
-		const MESSAGE_LIMITS = { free: 20, paid: 100 };
 		expect(MESSAGE_LIMITS.paid).toBe(100);
 	});
 });

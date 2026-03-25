@@ -84,12 +84,14 @@ export const conversations = pgTable('conversations', {
 export const messages = pgTable('messages', {
 	id: uuid('id').primaryKey().defaultRandom(),
 	conversationId: uuid('conversation_id').notNull().references(() => conversations.id, { onDelete: 'cascade' }),
+	userId: uuid('user_id').references(() => users.id, { onDelete: 'cascade' }),
 	role: messageRoleEnum('role').notNull(),
 	content: text('content').notNull(),
 	metadata: jsonb('metadata'),
 	createdAt: timestamp('created_at').defaultNow().notNull()
 }, (table) => [
-	index('messages_conversation_idx').on(table.conversationId)
+	index('messages_conversation_idx').on(table.conversationId),
+	index('messages_user_idx').on(table.userId)
 ]);
 
 // Approved video content
@@ -104,6 +106,12 @@ export const contentLinks = pgTable('content_links', {
 	beltLevel: beltEnum('belt_level').notNull().default('white'),
 	isPrimary: boolean('is_primary').notNull().default(true),
 	notes: text('notes')
+});
+
+// Stripe webhook idempotency
+export const stripeProcessedEvents = pgTable('stripe_processed_events', {
+	id: text('id').primaryKey(),
+	processedAt: timestamp('processed_at').defaultNow().notNull()
 });
 
 // Message rate limiting
@@ -146,7 +154,8 @@ export const conversationsRelations = relations(conversations, ({ one, many }) =
 }));
 
 export const messagesRelations = relations(messages, ({ one }) => ({
-	conversation: one(conversations, { fields: [messages.conversationId], references: [conversations.id] })
+	conversation: one(conversations, { fields: [messages.conversationId], references: [conversations.id] }),
+	user: one(users, { fields: [messages.userId], references: [users.id] })
 }));
 
 export const contentLinksRelations = relations(contentLinks, ({ one }) => ({

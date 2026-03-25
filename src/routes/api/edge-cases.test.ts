@@ -3,103 +3,67 @@ import { sessionSchema } from '$lib/server/schemas/session';
 import { chatRequestSchema } from '$lib/server/schemas/chat';
 import { getWeekStart } from '$lib/server/utils/week';
 
-/**
- * P3: Edge cases — "Realistic Messy Scenarios"
- */
-
-describe('P3: Rapid message sending', () => {
-	it('rate limit uses SQL increment (atomic, no race condition)', () => {
-		// Verified in src/routes/api/chat/+server.ts:
-		// db.update(messageCounts).set({ count: sql`${messageCounts.count} + 1` })
-		// This is an atomic SQL increment — concurrent requests will each increment correctly
-		// No read-modify-write race condition
-		expect(true).toBe(true);
-	});
-});
-
-describe('P3: Rate limit boundary', () => {
-	it('free limit check: count >= 20 returns 429', () => {
-		// Verified: if (existing.count >= limit) error(429)
-		// At count=19, user sends message -> count becomes 20 -> next request at 20 >= 20 -> 429
-		// Message 20 succeeds (count was 19 before increment), message 21 blocked
+describe('Rate limit boundary values', () => {
+	it('free limit boundary: message 20 is the last allowed', () => {
 		const MESSAGE_LIMITS = { free: 20, paid: 100 };
-		expect(19 < MESSAGE_LIMITS.free).toBe(true);  // message 20 passes
-		expect(20 >= MESSAGE_LIMITS.free).toBe(true);  // message 21 blocked
+		// Count starts at 0. After 20 messages, count = 20.
+		// Atomic update: lt(count, 20) allows count 0-19, blocks at 20.
+		expect(19 < MESSAGE_LIMITS.free).toBe(true);  // 20th message passes
+		expect(20 < MESSAGE_LIMITS.free).toBe(false);  // 21st blocked
 	});
 
-	it('paid limit check: count >= 100 returns 429', () => {
+	it('paid limit boundary: message 100 is the last allowed', () => {
 		const MESSAGE_LIMITS = { free: 20, paid: 100 };
 		expect(99 < MESSAGE_LIMITS.paid).toBe(true);
-		expect(100 >= MESSAGE_LIMITS.paid).toBe(true);
+		expect(100 < MESSAGE_LIMITS.paid).toBe(false);
 	});
 });
 
-describe('P3: Empty chat message', () => {
-	it('Zod rejects empty messages array', () => {
-		const result = chatRequestSchema.safeParse({ messages: [] });
-		expect(result.success).toBe(false);
-	});
-
-	it('message with no text parts saves empty string', () => {
-		// Verified in chat server: lastUserMsg.parts?.filter(p => p.type === 'text')
-		// If no text parts found, textContent = '' -> the if (textContent) check skips saving
-		// So empty messages are NOT saved to DB — correct behavior
-		expect(true).toBe(true);
-	});
-});
-
-describe('P3: Onboarding double-submit', () => {
-	it('onboarding uses db.update (idempotent, not insert)', () => {
-		// Verified in src/routes/onboarding/+page.server.ts:
-		// db.update(users).set({ ... }).where(eq(users.authId, authUser.id))
-		// Double-submit just updates the same row twice — no duplicate creation
-		expect(true).toBe(true);
-	});
-});
-
-describe('P3: Session with zero techniques', () => {
-	it('schema accepts empty techniquesHit array', () => {
-		const result = sessionSchema.safeParse({
-			type: 'rolling',
-			durationMinutes: 60,
-			intensityRpe: 7,
-			energy: 5,
-			techniquesHit: [],
-			techniquesAgainst: []
+describe('Empty/minimal input edge cases', () => {
+	it('chat: message with no parts is valid', () => {
+		const result = chatRequestSchema.safeParse({
+			messages: [{ id: '1', role: 'user' }]
 		});
 		expect(result.success).toBe(true);
 	});
 
-	it('schema defaults techniquesHit to empty array if omitted', () => {
+	it('chat: message with empty parts array is valid', () => {
+		const result = chatRequestSchema.safeParse({
+			messages: [{ id: '1', role: 'user', parts: [] }]
+		});
+		expect(result.success).toBe(true);
+	});
+
+	it('session: empty techniquesHit array is accepted', () => {
+		const result = sessionSchema.safeParse({
+			type: 'rolling', durationMinutes: 60, intensityRpe: 7, energy: 4,
+			techniquesHit: [], techniquesAgainst: []
+		});
+		expect(result.success).toBe(true);
+	});
+
+	it('session: techniquesHit defaults to empty when omitted', () => {
 		const result = sessionSchema.parse({
-			type: 'rolling',
-			durationMinutes: 60,
-			intensityRpe: 7,
-			energy: 5
+			type: 'rolling', durationMinutes: 60, intensityRpe: 7, energy: 4
 		});
 		expect(result.techniquesHit).toEqual([]);
 		expect(result.techniquesAgainst).toEqual([]);
 	});
 
-	it('server skips technique loop when array is empty', () => {
-		// Verified: if (body.techniquesHit?.length) { ... }
-		// Empty array has length 0, which is falsy -> loop is skipped
+	it('session: positionsWorked defaults to empty when omitted', () => {
+		const result = sessionSchema.parse({
+			type: 'rolling', durationMinutes: 60, intensityRpe: 7, energy: 4
+		});
+		expect(result.positionsWorked).toEqual([]);
+	});
+
+	it('empty array length is falsy (server uses this to skip loops)', () => {
 		expect([].length).toBeFalsy();
 	});
 });
 
-describe('P3: Session with invalid technique slug', () => {
-	it('server skips events for unknown slugs (no crash)', () => {
-		// Verified in sessions +server.ts:
-		// const technique = await db.query.techniques.findFirst({ where: eq(slug) })
-		// if (technique) { db.insert(events)... }
-		// Unknown slug -> technique is undefined -> if block is skipped
-		expect(true).toBe(true);
-	});
-});
-
-describe('P3: Week boundary for rate limiting', () => {
-	it('Sunday 23:59 UTC is still the previous Monday\'s week', () => {
+describe('Week boundary for rate limiting', () => {
+	it('Sunday 23:59 UTC falls in previous Monday\'s week', () => {
 		const sunday = new Date(Date.UTC(2026, 2, 22, 23, 59, 59));
 		const weekStart = getWeekStart(sunday);
 		expect(weekStart.toISOString()).toBe('2026-03-16T00:00:00.000Z');
@@ -111,40 +75,36 @@ describe('P3: Week boundary for rate limiting', () => {
 		expect(weekStart.toISOString()).toBe('2026-03-23T00:00:00.000Z');
 	});
 
-	it('week boundary is consistent for the entire week', () => {
-		// All days in the same week should return the same Monday
-		const mon = getWeekStart(new Date(Date.UTC(2026, 2, 16)));
-		const tue = getWeekStart(new Date(Date.UTC(2026, 2, 17)));
-		const wed = getWeekStart(new Date(Date.UTC(2026, 2, 18)));
-		const thu = getWeekStart(new Date(Date.UTC(2026, 2, 19)));
-		const fri = getWeekStart(new Date(Date.UTC(2026, 2, 20)));
-		const sat = getWeekStart(new Date(Date.UTC(2026, 2, 21)));
-		const sun = getWeekStart(new Date(Date.UTC(2026, 2, 22)));
+	it('all days in a week return the same Monday', () => {
 		const expected = '2026-03-16T00:00:00.000Z';
-		expect(mon.toISOString()).toBe(expected);
-		expect(tue.toISOString()).toBe(expected);
-		expect(wed.toISOString()).toBe(expected);
-		expect(thu.toISOString()).toBe(expected);
-		expect(fri.toISOString()).toBe(expected);
-		expect(sat.toISOString()).toBe(expected);
-		expect(sun.toISOString()).toBe(expected);
+		for (let d = 16; d <= 22; d++) {
+			const date = new Date(Date.UTC(2026, 2, d));
+			expect(getWeekStart(date).toISOString()).toBe(expected);
+		}
+	});
+
+	it('year boundary works correctly', () => {
+		// Dec 31, 2025 is a Wednesday -> week starts Dec 29 (Monday)
+		const dec31 = new Date(Date.UTC(2025, 11, 31));
+		const weekStart = getWeekStart(dec31);
+		expect(weekStart.toISOString()).toBe('2025-12-29T00:00:00.000Z');
 	});
 });
 
-describe('P3: Subscription downgrade via webhook', () => {
-	it('customer.subscription.deleted uses email lookup (no crash if user not found)', () => {
-		// Verified in src/routes/api/stripe/webhook/+server.ts:
-		// const customer = await stripe.customers.retrieve(subscription.customer)
-		// if ('email' in customer && customer.email) {
-		//   db.update(users).set({ subscriptionTier: 'free' }).where(eq(users.email, customer.email))
-		// }
-		// If no user has that email, the update simply affects 0 rows — no crash
-		expect(true).toBe(true);
+describe('Session schema extreme values', () => {
+	const base = { type: 'rolling' as const, durationMinutes: 60, intensityRpe: 7, energy: 4 };
+
+	it('rejects durationMinutes = 999999', () => {
+		expect(sessionSchema.safeParse({ ...base, durationMinutes: 999999 }).success).toBe(false);
 	});
 
-	it('handles deleted customer (no email property)', () => {
-		// Verified: 'email' in customer check handles the Stripe.DeletedCustomer type
-		// which doesn't have an email field
-		expect(true).toBe(true);
+	it('accepts durationMinutes = 1 (minimum)', () => {
+		expect(sessionSchema.safeParse({ ...base, durationMinutes: 1 }).success).toBe(true);
+	});
+
+	it('rejects non-integer values', () => {
+		expect(sessionSchema.safeParse({ ...base, durationMinutes: 60.5 }).success).toBe(false);
+		expect(sessionSchema.safeParse({ ...base, energy: 3.5 }).success).toBe(false);
+		expect(sessionSchema.safeParse({ ...base, intensityRpe: 7.5 }).success).toBe(false);
 	});
 });

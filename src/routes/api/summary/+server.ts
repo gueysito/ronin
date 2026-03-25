@@ -16,7 +16,24 @@ export const POST: RequestHandler = async ({ locals }) => {
 	});
 	if (!user) error(404, 'User not found');
 
+	// Check if a summary was already generated this week
 	const weekAgo = new Date(Date.now() - 7 * 86400000);
+
+	const existingConv = await db.query.conversations.findFirst({
+		where: eq(conversations.userId, user.id),
+		orderBy: [desc(conversations.createdAt)]
+	});
+	if (existingConv) {
+		const recentSummary = await db.query.messages.findFirst({
+			where: and(
+				eq(messages.conversationId, existingConv.id),
+				gte(messages.createdAt, weekAgo)
+			)
+		});
+		if (recentSummary && typeof recentSummary.metadata === 'object' && recentSummary.metadata !== null && 'type' in recentSummary.metadata && recentSummary.metadata.type === 'weekly_summary') {
+			return json({ summary: recentSummary.content, cached: true });
+		}
+	}
 
 	const weekSessions = await db.query.sessions.findMany({
 		where: and(eq(sessions.userId, user.id), gte(sessions.date, weekAgo)),
@@ -115,6 +132,7 @@ TONE: Calm, specific, analytical, encouraging. Reference actual numbers from the
 
 	await db.insert(messages).values({
 		conversationId: conversation.id,
+		userId: user.id,
 		role: 'assistant',
 		content: result.text,
 		metadata: { type: 'weekly_summary', weekOf: weekAgo.toISOString() }
