@@ -1,7 +1,7 @@
 import { json, error } from '@sveltejs/kit';
 import { streamText, convertToModelMessages, type UIMessage } from 'ai';
-import { createAnthropic } from '@ai-sdk/anthropic';
-import { ANTHROPIC_API_KEY } from '$env/static/private';
+import { createOpenAI } from '@ai-sdk/openai';
+import { OPENROUTER_API_KEY } from '$env/static/private';
 import { db } from '$lib/server/db';
 import { users, sessions, messageCounts, contentLinks, conversations, messages as messagesTable } from '$lib/server/db/schema';
 import { eq, and, gte, desc, sql } from 'drizzle-orm';
@@ -72,7 +72,10 @@ export const POST: RequestHandler = async ({ request, locals }) => {
 		limit: 15
 	});
 
-	const anthropic = createAnthropic({ apiKey: ANTHROPIC_API_KEY });
+	const openrouter = createOpenAI({
+		apiKey: OPENROUTER_API_KEY,
+		baseURL: 'https://openrouter.ai/api/v1'
+	});
 
 	// Ensure conversation exists for persistence
 	let conversation = await db.query.conversations.findFirst({
@@ -101,7 +104,7 @@ export const POST: RequestHandler = async ({ request, locals }) => {
 	}
 
 	const result = streamText({
-		model: anthropic('claude-haiku-4-5'),
+		model: openrouter('anthropic/claude-3.5-haiku'),
 		system: buildSystemPrompt(user, recentSessions, videos),
 		messages: await convertToModelMessages(messages),
 		maxRetries: 2,
