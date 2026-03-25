@@ -80,8 +80,8 @@ PROFILE: ${user.belt} belt, goals: ${(user.goals ?? []).join(', ') || 'none'}`;
 			});
 
 			processed++;
-		} catch (err) {
-			console.error(`Summary failed for user ${user.id}:`, err);
+		} catch {
+			// Summary generation failed for this user — skip and continue
 		}
 	}
 
