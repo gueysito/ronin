@@ -11,3 +11,7 @@ dist/
 vite.config.js.timestamp-*
 vite.config.ts.timestamp-*
 supabase/.temp/
+.ralph/logs/
+.ralph/.*
+.ralph/progress.json
+.ralph/status.json

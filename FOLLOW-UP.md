@@ -58,6 +58,7 @@ These are real features but not worth building until someone is actually using t
 - Error tracking, session replays, analytics
 - Not needed until you have enough traffic to generate actionable data
 - Add Sentry first (catch errors), PostHog second (understand behavior)
+- **Known gap (2026-03-24):** Ralph's battle-test run removed `console.error` calls from the Stripe webhook and cron summary handlers to prevent sensitive data leakage. The cron handler (`src/routes/api/summary/cron/+server.ts:83-85`) now silently swallows per-user summary failures. Once Sentry is added, replace the bare `catch {}` with structured error reporting so failed summaries are visible without leaking secrets.
 
 ---
 
@@ -68,6 +69,19 @@ These are real features but not worth building until someone is actually using t
 - **Root cause**: The correct pooler host for this project is `aws-1-us-east-1.pooler.supabase.com` (not `aws-0`). Discovered via `supabase db push --dry-run --debug` which revealed the CLI's actual connection target.
 - **Fix**: Updated `DATABASE_URL` in `.env` to use `aws-1-us-east-1.pooler.supabase.com`.
 - **Status**: Schema pushed (`db:push`), seed complete (50 techniques + 32 videos). DB fully operational.
+
+---
+
+## Competitor Research
+
+These competitors need thorough research — feature sets, pricing, UX patterns, positioning, and what they do well/poorly. Findings should inform MatMentor's differentiation strategy.
+
+- https://grapplingaiapp.com/
+- https://www.bjjnotes.app/
+- https://aibjj.com/
+- https://www.athleteanalyzer.com/video-analysis-brazilian-jiu-jitsu
+- https://brainjiujitsu.com/
+- https://digitsu.com/sudo
 
 ---
 
