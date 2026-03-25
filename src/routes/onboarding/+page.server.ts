@@ -13,8 +13,14 @@ export const actions: Actions = {
 		const belt = formData.get('belt') as string;
 		const experience = formData.get('experience') as string;
 		const trainingFrequency = formData.get('trainingFrequency') as string;
-		const goals = JSON.parse((formData.get('goals') as string) || '[]');
-		const struggles = JSON.parse((formData.get('struggles') as string) || '[]');
+		let goals: string[] = [];
+		let struggles: string[] = [];
+		try {
+			goals = JSON.parse((formData.get('goals') as string) || '[]');
+			struggles = JSON.parse((formData.get('struggles') as string) || '[]');
+		} catch {
+			return fail(400, { message: 'Invalid goals or struggles format' });
+		}
 		const destination = formData.get('destination') as string;
 
 		const experienceMap: Record<string, number> = {
